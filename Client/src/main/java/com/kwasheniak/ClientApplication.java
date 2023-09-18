@@ -22,6 +22,8 @@ public class ClientApplication extends Application {
         stage.show();
 
         log.info(scene.getHeight() + " " + scene.getWidth());
+        stage.setHeight(scene.getHeight());
+        stage.setWidth(scene.getWidth());
         stage.setMinHeight(scene.getHeight());
         stage.setMinWidth(scene.getWidth());
 

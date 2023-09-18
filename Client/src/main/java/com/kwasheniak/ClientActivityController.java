@@ -11,6 +11,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextFlow;
@@ -28,27 +29,31 @@ import java.util.ResourceBundle;
 public class ClientActivityController implements Initializable {
 
     @FXML
-    BorderPane mainPane;
+    private BorderPane mainPane;
     @FXML
-    HBox bottomHBox;
+    private HBox bottomHBox;
     @FXML
-    ScrollPane scrollPane;
+    private ScrollPane scrollPane;
     @FXML
-    VBox vBox;
+    private VBox vBox;
     @FXML
-    TextArea textArea;
+    private TextArea textArea;
     @FXML
-    Button buttonSend;
+    private Button buttonSend;
     @FXML
-    Button buttonAdd;
+    private Button buttonAdd;
 
-    public boolean isLeft = true;
+    private boolean isLeft = true;
 
-    ArrayList<File> files;
+    private ArrayList<File> files;
+
+    private static final int IMAGE_PREVIEW_HEIGHT = 150;
+    private static final String HYPERLINK_FONT = "System Bold Italic";
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         files = new ArrayList<>();
+        //Font.getFontNames().forEach(System.out::println);
 
         setMessageAutoScroll();
 
@@ -64,10 +69,10 @@ public class ClientActivityController implements Initializable {
         });
 
         buttonAdd.setOnAction(event -> {
-
             File file = getFileFromDialog(((Node)event.getSource()).getScene().getWindow());
             if(file != null){
                 log.info(file.getAbsolutePath());
+                log.info(file.getName());
                 files.add(file);
                 addMessageOnBoard();
             }
@@ -101,12 +106,33 @@ public class ClientActivityController implements Initializable {
         if(!files.isEmpty()){
 
             files.forEach(file -> {
-                ImageView imageView = new ImageView(new Image(file.getAbsolutePath()));
-                imageView.setFitHeight(150);
-                imageView.setPreserveRatio(true);
-                messageLabel.setGraphic(imageView);
+                if(file.getName().endsWith(".jpg") || file.getName().endsWith(".png")){
+                    ImageView imageView = new ImageView(new Image(file.getAbsolutePath()));
+                    imageView.setFitHeight(IMAGE_PREVIEW_HEIGHT);
+                    imageView.setPreserveRatio(true);
+                    messageLabel.setGraphic(imageView);
+                }else {
+                    messageLabel.setText(file.getName());
+                    messageLabel.setUnderline(true);
+                    messageLabel.setFont(new Font(HYPERLINK_FONT, messageLabel.getFont().getSize()));
+                    messageLabel.setOnMouseEntered(mouseEvent -> {
+                        messageLabel.setFont(new Font("System Bold Italic", messageLabel.getFont().getSize()));
+                        messageLabel.setTextFill(Color.MEDIUMBLUE);
+                    });
+                    messageLabel.setOnMouseExited(mouseEvent -> {
+                        messageLabel.setFont(new Font(HYPERLINK_FONT, messageLabel.getFont().getSize()));
+                        messageLabel.setTextFill(Color.BLACK);
+                    });
+                }
+                messageLabel.setOnMouseClicked(mouseEvent -> {
+                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                    alert.setContentText("Do tou want to download this file?");
+                    alert.setHeaderText(file.getName());
+                    alert.show();
+                });
             });
             files.clear();
+
         }
         messageLabel.setContentDisplay(ContentDisplay.TOP);
         messageLabel.setAlignment(Pos.TOP_LEFT);

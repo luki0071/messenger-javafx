@@ -16,9 +16,8 @@
         </HBox>
     </bottom>
    <center>
-       <ScrollPane fx:id="scrollPane" fitToWidth="true" hbarPolicy="NEVER" pannable="true" vbarPolicy="NEVER"
-                   BorderPane.alignment="CENTER">
-           <VBox fx:id="vBox"/>
+       <ScrollPane fx:id="scrollPane" fitToWidth="true" hbarPolicy="NEVER" pannable="true" vbarPolicy="NEVER" BorderPane.alignment="CENTER">
+           <VBox fx:id="vBox" />
        </ScrollPane>
    </center>
 
