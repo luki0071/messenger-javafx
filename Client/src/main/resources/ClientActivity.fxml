@@ -4,21 +4,35 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane fx:id="mainPane" prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.kwasheniak.ClientActivityController">
+<BorderPane fx:id="fxRootContainer" prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.kwasheniak.ClientActivityController">
     <bottom>
         <HBox fx:id="bottomHBox" alignment="CENTER" layoutX="4.0" layoutY="500.0" prefHeight="100.0" prefWidth="600.0" spacing="3.0">
             <padding>
                 <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
             </padding>
-            <TextArea fx:id="textArea" HBox.hgrow="ALWAYS" />
-            <Button fx:id="buttonSend" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="100.0" prefWidth="100.0" text="Send" />
-            <Button fx:id="buttonAdd" alignment="CENTER" maxHeight="100.0" maxWidth="100.0" minHeight="100.0" minWidth="100.0" mnemonicParsing="false" prefHeight="100.0" prefWidth="100.0" text="Add" />
+            <TextArea fx:id="fxWrittingTextArea" HBox.hgrow="ALWAYS" />
+            <Button fx:id="fxSendMessageButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="100.0" prefWidth="100.0" text="Send" />
+            <Button fx:id="fxAddFileButton" alignment="CENTER" maxHeight="100.0" maxWidth="100.0" minHeight="100.0" minWidth="100.0" mnemonicParsing="false" prefHeight="100.0" prefWidth="100.0" text="Add" />
         </HBox>
     </bottom>
    <center>
-       <ScrollPane fx:id="scrollPane" fitToWidth="true" hbarPolicy="NEVER" pannable="true" vbarPolicy="NEVER" BorderPane.alignment="CENTER">
-           <VBox fx:id="vBox" />
+       <ScrollPane fx:id="fxScrollPane" fitToWidth="true" hbarPolicy="NEVER" pannable="true" style="-fx-focus-color: transparent; -fx-faint-focus-color: transparent;" vbarPolicy="NEVER" BorderPane.alignment="CENTER">
+           <VBox fx:id="fxMessagesContainer" />
        </ScrollPane>
    </center>
+   <!--<top>
+      <HBox alignment="TOP_RIGHT" BorderPane.alignment="CENTER">
+         <children>
+            <Pane HBox.hgrow="ALWAYS">
+               <children>
+                  <Button mnemonicParsing="false" text="Settings" />
+               </children>
+            </Pane>
+            <Button mnemonicParsing="false" text="minimize" />
+            <Button mnemonicParsing="false" text="Wide" />
+            <Button mnemonicParsing="false" text="Exit" />
+         </children>
+      </HBox>
+   </top>-->
 
 </BorderPane>

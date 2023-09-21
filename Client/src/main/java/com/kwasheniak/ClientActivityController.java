@@ -1,6 +1,6 @@
 package com.kwasheniak;
 
-import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
@@ -12,156 +12,160 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
-import javafx.scene.text.Text;
-import javafx.scene.text.TextAlignment;
-import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import lombok.extern.log4j.Log4j2;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.ResourceBundle;
 
 @Log4j2
 public class ClientActivityController implements Initializable {
 
     @FXML
-    private BorderPane mainPane;
+    private BorderPane fxRootContainer;
     @FXML
     private HBox bottomHBox;
     @FXML
-    private ScrollPane scrollPane;
+    private ScrollPane fxScrollPane;
     @FXML
-    private VBox vBox;
+    private VBox fxMessagesContainer;
     @FXML
-    private TextArea textArea;
+    private TextArea fxWrittingTextArea;
     @FXML
-    private Button buttonSend;
+    private Button fxSendMessageButton;
     @FXML
-    private Button buttonAdd;
+    private Button fxAddFileButton;
 
     private boolean isLeft = true;
 
-    private ArrayList<File> files;
+    private File fileToSend;
 
     private static final int IMAGE_PREVIEW_HEIGHT = 150;
+    private static final int MESSAGE_PANE_PADDING_VALUE = 5;
+    private static final double MESSAGE_FRAME_CORNER_RADIUS_VALUE = 5.0;
     private static final String HYPERLINK_FONT = "System Bold Italic";
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        files = new ArrayList<>();
-        //Font.getFontNames().forEach(System.out::println);
 
         setMessageAutoScroll();
 
-        buttonSend.setOnAction(event -> {
-            String text = textArea.getText();
+        fxSendMessageButton.setOnAction(event -> {
+            String text = fxWrittingTextArea.getText();
             /*try {
                 ClientCore.sendDataToServer(text);
                 addMessageOnBoard();
             } catch (IOException e) {
                 log.info("can't establish connect with server");
             }*/
-            addMessageOnBoard();
+            addMessageToMessagesContainer();
         });
 
-        buttonAdd.setOnAction(event -> {
-            File file = getFileFromDialog(((Node)event.getSource()).getScene().getWindow());
-            if(file != null){
-                log.info(file.getAbsolutePath());
-                log.info(file.getName());
-                files.add(file);
-                addMessageOnBoard();
+        fxAddFileButton.setOnAction(event -> {
+            fileToSend = chooseFileToSend(((Node) event.getSource()).getScene().getWindow());
+            if (fileToSend != null) {
+                log.info(fileToSend.getAbsolutePath());
+                addMessageToMessagesContainer();
             }
         });
-
     }
 
-    public BorderPane createMessagePane(String text){
-        BorderPane messageBorderPane = new BorderPane();
-        messageBorderPane.setPadding(new Insets(5));
+    public BorderPane createMessageBlock() {
+        BorderPane messageBlock = new BorderPane();
+        messageBlock.setPadding(new Insets(MESSAGE_PANE_PADDING_VALUE));
 
-        if(isLeft){
-            log.info("left");
-            messageBorderPane.setLeft(createMessageLabel(text));
-            isLeft=false;
-        }else{
-            log.info("right");
-            messageBorderPane.setRight(createMessageLabel(text));
-            isLeft=true;
-        }
-        return messageBorderPane;
+        /*if (isLeft) {
+            messageBlock.setLeft(createMessageLabel(text));
+            isLeft = false;
+        } else {
+            messageBlock.setRight(createMessageLabel(text));
+            isLeft = true;
+        }*/
+        messageBlock.setRight(createMessageFrame(fxWrittingTextArea.getText()));
+        fxWrittingTextArea.clear();
+        return messageBlock;
     }
 
-    public Label createMessageLabel(String text){
-        Label messageLabel = new Label();
-        if(!"".equals(text)){
-            messageLabel.setText(text);
-        }
-        messageLabel.setMaxWidth(mainPane.getWidth()/2);
-        setAutoResizableWidthMessageLabel(messageLabel);
-        if(!files.isEmpty()){
+    public Label createMessageFrame(String text) {
+        Label messageFrame = new Label(text);
+        messageFrame.setMaxWidth(fxRootContainer.getWidth() / 2);
+        messageFrame.setAlignment(Pos.TOP_LEFT);
+        messageFrame.setWrapText(true);
+        messageFrame.setBackground(new Background(new BackgroundFill(Color.LIGHTBLUE, new CornerRadii(MESSAGE_FRAME_CORNER_RADIUS_VALUE), null)));
+        messageFrame.setPadding(new Insets(MESSAGE_PANE_PADDING_VALUE));
+        setAutoResizableMessageFrame(messageFrame);
 
-            files.forEach(file -> {
-                if(file.getName().endsWith(".jpg") || file.getName().endsWith(".png")){
-                    ImageView imageView = new ImageView(new Image(file.getAbsolutePath()));
-                    imageView.setFitHeight(IMAGE_PREVIEW_HEIGHT);
-                    imageView.setPreserveRatio(true);
-                    messageLabel.setGraphic(imageView);
-                }else {
-                    messageLabel.setText(file.getName());
-                    messageLabel.setUnderline(true);
-                    messageLabel.setFont(new Font(HYPERLINK_FONT, messageLabel.getFont().getSize()));
-                    messageLabel.setOnMouseEntered(mouseEvent -> {
-                        messageLabel.setFont(new Font("System Bold Italic", messageLabel.getFont().getSize()));
-                        messageLabel.setTextFill(Color.MEDIUMBLUE);
-                    });
-                    messageLabel.setOnMouseExited(mouseEvent -> {
-                        messageLabel.setFont(new Font(HYPERLINK_FONT, messageLabel.getFont().getSize()));
-                        messageLabel.setTextFill(Color.BLACK);
-                    });
-                }
-                messageLabel.setOnMouseClicked(mouseEvent -> {
-                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-                    alert.setContentText("Do tou want to download this file?");
-                    alert.setHeaderText(file.getName());
-                    alert.show();
-                });
+        if (fileToSend != null)
+            addFileToMessageFrame(fileToSend, messageFrame);
+
+        return messageFrame;
+    }
+
+    public void addFileToMessageFrame(File file, Label messageFrame) {
+        if (file.getName().endsWith(".jpg") || file.getName().endsWith(".png")) {
+            ImageView imageView = new ImageView(new Image(file.getAbsolutePath()));
+            imageView.setFitHeight(calculatePreviewImageHeight());
+            imageView.setPreserveRatio(true);
+            messageFrame.setGraphic(imageView);
+            setAutoResizableImageInMessageFrame(imageView, messageFrame);
+
+        } else {
+            messageFrame.setText(file.getName());
+            messageFrame.setUnderline(true);
+            messageFrame.setFont(new Font(HYPERLINK_FONT, messageFrame.getFont().getSize()));
+            messageFrame.setOnMouseEntered(mouseEvent -> {
+                messageFrame.setFont(new Font(HYPERLINK_FONT, messageFrame.getFont().getSize()));
+                messageFrame.setTextFill(Color.MEDIUMBLUE);
             });
-            files.clear();
-
+            messageFrame.setOnMouseExited(mouseEvent -> {
+                messageFrame.setFont(new Font(HYPERLINK_FONT, messageFrame.getFont().getSize()));
+                messageFrame.setTextFill(Color.BLACK);
+            });
         }
-        messageLabel.setContentDisplay(ContentDisplay.TOP);
-        messageLabel.setAlignment(Pos.TOP_LEFT);
-        messageLabel.setWrapText(true);
-        messageLabel.setBackground(new Background(new BackgroundFill(Color.LIGHTBLUE,new CornerRadii(5.0),null)));
-        messageLabel.setPadding(new Insets(5));
-        return messageLabel;
+        messageFrame.setOnMouseClicked(mouseEvent -> showFileDownloadDialog(file));
+        fileToSend = null;
     }
 
-    public void addMessageOnBoard(){
-        if(!"".equals(textArea.getText()) || !files.isEmpty()){
-            vBox.getChildren().add(createMessagePane(textArea.getText()));
-        }
-        textArea.clear();
+    public void showFileDownloadDialog(File file){
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setContentText("Do tou want to download this file?");
+        alert.setHeaderText(file.getName());
+        alert.show();
     }
 
-    public void setMessageAutoScroll(){
-        vBox.heightProperty().addListener(observable -> scrollPane.setVvalue(1.0));
+    public void addMessageToMessagesContainer() {
+        if (!"".equals(fxWrittingTextArea.getText()) || fileToSend != null) {
+            fxMessagesContainer.getChildren().add(createMessageBlock());
+        }
+    }
+
+    public void setMessageAutoScroll() {
+        fxMessagesContainer.heightProperty().addListener(observable -> fxScrollPane.setVvalue(1.0));
         //scrollPane.vvalueProperty().bind(vBox.heightProperty());
     }
 
-    public void setAutoResizableWidthMessageLabel(Label messageLabel){
-        mainPane.widthProperty().addListener(observable -> messageLabel.setMaxWidth(mainPane.getWidth()/2));
+    public void setAutoResizableMessageFrame(Label messageFrame) {
+        fxRootContainer.widthProperty().addListener(observable -> messageFrame.setMaxWidth(fxRootContainer.getWidth() / 2));
+        //messageLabel.maxWidthProperty().bind(Bindings.createDoubleBinding(() -> fxRootBorderPane.getWidth()/2, fxRootBorderPane.widthProperty()));
     }
 
-    public File getFileFromDialog(Window window){
+    public void setAutoResizableImageInMessageFrame(ImageView image, Label messageFrame){
+        messageFrame.graphicProperty().bind(Bindings.createObjectBinding(() -> {
+            image.setFitHeight(calculatePreviewImageHeight());
+            return image;
+        }, fxRootContainer.widthProperty()));
+    }
+
+    public File chooseFileToSend(Window window) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("file chooser");
         fileChooser.setInitialDirectory(new File("C:\\Users\\Kwasheniak\\Documents\\Różne\\zrózne\\Obrazy"));
         return fileChooser.showOpenDialog(window);
+    }
+
+    public double calculatePreviewImageHeight() {
+        return fxRootContainer.getWidth() / 5;
     }
 }
