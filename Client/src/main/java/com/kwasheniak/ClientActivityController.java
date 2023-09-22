@@ -17,6 +17,7 @@ import javafx.stage.Window;
 import lombok.extern.log4j.Log4j2;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -42,7 +43,7 @@ public class ClientActivityController implements Initializable {
 
     private File fileToSend;
 
-    private static final int IMAGE_PREVIEW_HEIGHT = 150;
+    //private static final int IMAGE_PREVIEW_HEIGHT = 150;
     private static final int MESSAGE_PANE_PADDING_VALUE = 5;
     private static final double MESSAGE_FRAME_CORNER_RADIUS_VALUE = 5.0;
     private static final String HYPERLINK_FONT = "System Bold Italic";
@@ -54,20 +55,25 @@ public class ClientActivityController implements Initializable {
 
         fxSendMessageButton.setOnAction(event -> {
             String text = fxWrittingTextArea.getText();
-            /*try {
-                ClientCore.sendDataToServer(text);
-                addMessageOnBoard();
+            try {
+                ClientCore.sendMessageToServer(text);
+                addMessageToMessagesContainer();
             } catch (IOException e) {
                 log.info("can't establish connect with server");
-            }*/
-            addMessageToMessagesContainer();
+            }
+
         });
 
         fxAddFileButton.setOnAction(event -> {
             fileToSend = chooseFileToSend(((Node) event.getSource()).getScene().getWindow());
             if (fileToSend != null) {
                 log.info(fileToSend.getAbsolutePath());
-                addMessageToMessagesContainer();
+                try {
+                    ClientCore.sendMessageToServer(fileToSend.getName(), fileToSend);
+                    addMessageToMessagesContainer();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
     }

@@ -23,11 +23,14 @@ public class ClientApplication extends Application {
         //stage.initStyle(StageStyle.UNDECORATED);
         stage.show();
 
-        log.info(scene.getHeight() + " " + scene.getWidth());
-        stage.setHeight(scene.getHeight());
-        stage.setWidth(scene.getWidth());
-        stage.setMinHeight(scene.getHeight());
-        stage.setMinWidth(scene.getWidth());
+        setStageMinSize(stage);
 
+    }
+
+    private void setStageMinSize(Stage stage){
+        stage.setHeight(stage.getScene().getHeight());
+        stage.setWidth(stage.getScene().getWidth());
+        stage.setMinHeight(stage.getScene().getHeight());
+        stage.setMinWidth(stage.getScene().getWidth());
     }
 }
