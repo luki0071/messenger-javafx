@@ -1,5 +1,6 @@
 package com.kwasheniak;
 
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -16,9 +17,10 @@ import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import lombok.extern.log4j.Log4j2;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.net.Socket;
 import java.net.URL;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 @Log4j2
@@ -42,21 +44,31 @@ public class ClientActivityController implements Initializable {
     private boolean isLeft = true;
 
     private File fileToSend;
-
-    //private static final int IMAGE_PREVIEW_HEIGHT = 150;
     private static final int MESSAGE_PANE_PADDING_VALUE = 5;
     private static final double MESSAGE_FRAME_CORNER_RADIUS_VALUE = 5.0;
     private static final String HYPERLINK_FONT = "System Bold Italic";
 
+    private ClientCore clientCore;
+    private DataInputStream dataInputStream;
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
+        clientCore = new ClientCore();
+        listenForMessages();
+
         setMessageAutoScroll();
+
+        Platform.runLater(() -> {
+            fxRootContainer.getScene().getWindow().setOnCloseRequest(windowEvent -> {
+                clientCore.closeConnection();
+            });
+        });
 
         fxSendMessageButton.setOnAction(event -> {
             String text = fxWrittingTextArea.getText();
             try {
-                ClientCore.sendMessageToServer(text);
+                clientCore.sendMessageToServer(text);
                 addMessageToMessagesContainer();
             } catch (IOException e) {
                 log.info("can't establish connect with server");
@@ -69,7 +81,7 @@ public class ClientActivityController implements Initializable {
             if (fileToSend != null) {
                 log.info(fileToSend.getAbsolutePath());
                 try {
-                    ClientCore.sendMessageToServer(fileToSend.getName(), fileToSend);
+                    clientCore.sendMessageToServer(fileToSend.getName(), fileToSend);
                     addMessageToMessagesContainer();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -173,5 +185,86 @@ public class ClientActivityController implements Initializable {
 
     public double calculatePreviewImageHeight() {
         return fxRootContainer.getWidth() / 5;
+    }
+
+    public void listenForMessages(){
+        new Thread(() -> {
+            while(clientCore.getSocket().isConnected()){
+                dataInputStream = clientCore.getDataInputStream();
+                //BufferedInputStream bufferedInputStream = new BufferedInputStream(dataInputStream);
+                try {
+                    //byte[] d = bufferedInputStream.readNBytes(dataInputStream.readInt());
+                    byte[] dataType = dataInputStream.readNBytes(dataInputStream.readInt());
+                    byte[] data = dataInputStream.readNBytes(dataInputStream.readInt());
+                    Platform.runLater(() -> createMessageLabel(dataType, data));
+                } catch (IOException e) {
+                    log.error(e);
+                }
+            }
+        }).start();
+    }
+
+    public void createMessageLabel(byte[] dataType, byte[] data){
+        String dataTypeName = new String(dataType);
+        Label messageLabel = new Label();
+        messageLabel.setMaxWidth(fxRootContainer.getWidth()/2);
+        setAutoResizableMessageFrame(messageLabel);
+
+        messageLabel.setContentDisplay(ContentDisplay.TOP);
+        messageLabel.setAlignment(Pos.TOP_LEFT);
+        messageLabel.setWrapText(true);
+        messageLabel.setBackground(new Background(new BackgroundFill(Color.LIGHTBLUE,new CornerRadii(5.0),null)));
+        messageLabel.setPadding(new Insets(5));
+
+        if(dataTypeName.startsWith("text")){
+            messageLabel.setText(new String(data));
+        }else{
+            if(dataTypeName.endsWith(".jpg") || dataTypeName.endsWith(".png")){
+                Image img = new Image(new ByteArrayInputStream(data));
+                ImageView imageView = new ImageView(img);
+                imageView.setFitHeight(calculatePreviewImageHeight());
+                imageView.setPreserveRatio(true);
+                messageLabel.setGraphic(imageView);
+                setAutoResizableImageInMessageFrame(imageView, messageLabel);
+            }else {
+                messageLabel.setText(dataTypeName);
+                messageLabel.setUnderline(true);
+                messageLabel.setFont(new Font(HYPERLINK_FONT, messageLabel.getFont().getSize()));
+                messageLabel.setOnMouseEntered(mouseEvent -> {
+                    messageLabel.setFont(new Font("System Bold Italic", messageLabel.getFont().getSize()));
+                    messageLabel.setTextFill(Color.MEDIUMBLUE);
+                });
+                messageLabel.setOnMouseExited(mouseEvent -> {
+                    messageLabel.setFont(new Font(HYPERLINK_FONT, messageLabel.getFont().getSize()));
+                    messageLabel.setTextFill(Color.BLACK);
+                });
+            }
+            messageLabel.setOnMouseClicked(mouseEvent -> {
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                alert.setContentText("Do tou want to download this file?");
+                alert.setHeaderText(dataTypeName);
+                Optional<ButtonType> result = alert.showAndWait();
+                if(result.isPresent()){
+                    if(result.get() == ButtonType.OK){
+                        File downloadFile = new File("src/main/resources", dataTypeName);
+
+                        try(FileOutputStream fileOutputStream = new FileOutputStream(downloadFile)){
+                            fileOutputStream.write(data);
+                        }catch (IOException error){
+                            log.error(error);
+                        }
+                    } else if (result.get() == ButtonType.CANCEL) {
+                        alert.close();
+                    }
+                }
+            });
+
+        }
+
+        BorderPane messageBorderPane = new BorderPane();
+        messageBorderPane.setPadding(new Insets(5));
+
+        messageBorderPane.setLeft(messageLabel);
+        fxMessagesContainer.getChildren().add(messageBorderPane);
     }
 }
