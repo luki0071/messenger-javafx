@@ -28,16 +28,15 @@ public class ServerApplication extends Application {
         stage.setScene(scene);
         stage.show();
 
+        //closes server on window closing
         stage.setOnCloseRequest(windowEvent -> {
             serverCore.closeServer();
         });
 
-        final ServerActivityController controller = loader.getController();
-
         new Thread(new Task<Void>() {
             @Override
             protected Void call() {
-                serverCore = new ServerCore(1234, controller);
+                serverCore = new ServerCore(1234, loader.getController());
                 serverCore.createServer();
                 return null;
             }

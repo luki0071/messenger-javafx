@@ -24,22 +24,27 @@ public class ServerCore {
         try{
             serverSocket = new ServerSocket(portNumber);
             log.info("server start");
-            while(true){
+            while(!serverSocket.isClosed()){
                 Socket socket = serverSocket.accept();
 
-                log.info("connected with client");
+                ClientHandler clientHandler = new ClientHandler(socket, controller);
+
+                Thread thread = new Thread(clientHandler);
+                thread.start();
+
+                /*log.info("connected with client");
                 DataInputStream dataInputStream = new DataInputStream(socket.getInputStream());
                 byte[] dataType = dataInputStream.readNBytes(dataInputStream.readInt());
                 byte[] data = dataInputStream.readNBytes(dataInputStream.readInt());
                 Platform.runLater(() -> controller.addMessageOnBoard(dataType, data)); //Platform.runLater allows update a GUI component from a non-GUI thread
 
                 dataInputStream.close();
-                socket.close();
+                socket.close();*/
             }
         }catch (IOException e){
             log.error(e);
+            closeServer();
         }
-
     }
 
     public void closeServer(){
@@ -52,5 +57,4 @@ public class ServerCore {
             }
         }
     }
-
 }

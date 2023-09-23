@@ -129,4 +129,5 @@ public class ServerActivityController implements Initializable {
         fxRootContainer.widthProperty().addListener(observable -> messageLabel.setMaxWidth(fxRootContainer.getWidth()/2));
         //messageLabel.maxWidthProperty().bind(Bindings.createDoubleBinding(() -> fxRootBorderPane.getWidth()/2, fxRootBorderPane.widthProperty()));
     }
+
 }
