@@ -13,10 +13,11 @@ import java.util.ArrayList;
 public class ClientHandler implements Runnable{
 
     public static ArrayList<ClientHandler> clientHandlers = new ArrayList<>();
+    public static int USER_ID = 1;
     private Socket socket;
     private DataInputStream dataInputStream;
     private DataOutputStream dataOutputStream;
-    private String clientUsername;
+    private int clientUserId;
 
     private ServerActivityController controller;
 
@@ -25,10 +26,11 @@ public class ClientHandler implements Runnable{
             this.socket = socket;
             this.dataInputStream = new DataInputStream(socket.getInputStream());
             this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
-            clientHandlers.add(this);
+            this.clientUserId = USER_ID++;
             this.controller = controller;
+            clientHandlers.add(this);
         } catch (IOException e) {
-            log.error(e);
+            log.error("ClientHandler " + e);
             closeConnection();
         }
     }
@@ -47,7 +49,7 @@ public class ClientHandler implements Runnable{
                 broadcastMessage(dataType, data);
 
             } catch (IOException e) {
-                log.error(e);
+                log.error("run: lost connection with user: " + clientUserId + " " + e);
                 closeConnection();
                 break;
             }
@@ -64,24 +66,23 @@ public class ClientHandler implements Runnable{
             if(socket != null)
                 socket.close();
         }catch (IOException e){
-            log.error(e);
+            log.error("closeConnection " + e);
         }
     }
 
     public void broadcastMessage(byte[] dataType, byte[] data){
         clientHandlers.forEach(clientHandler -> {
-            try {
-                dataOutputStream.writeInt(dataType.length);
-                dataOutputStream.write(dataType);
-                dataOutputStream.writeInt(data.length);
-                dataOutputStream.write(data);
-            } catch (IOException e) {
-                log.error(e);
-                closeConnection();
+            if(clientHandler.clientUserId != clientUserId){
+                try {
+                    clientHandler.dataOutputStream.writeInt(dataType.length);
+                    clientHandler.dataOutputStream.write(dataType);
+                    clientHandler.dataOutputStream.writeInt(data.length);
+                    clientHandler.dataOutputStream.write(data);
+                } catch (IOException e) {
+                    log.error("broadcastMessage: " + e);
+                    closeConnection();
+                }
             }
-            /*if(!clientHandler.socket.equals(socket)){
-
-            }*/
         });
     }
 
