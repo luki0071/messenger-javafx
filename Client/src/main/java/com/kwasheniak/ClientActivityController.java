@@ -18,7 +18,6 @@ import javafx.stage.Window;
 import lombok.extern.log4j.Log4j2;
 
 import java.io.*;
-import java.net.Socket;
 import java.net.URL;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -33,7 +32,7 @@ public class ClientActivityController implements Initializable {
     @FXML
     private ScrollPane fxScrollPane;
     @FXML
-    private VBox fxMessagesContainer;
+    private VBox fxMessageBoard;
     @FXML
     private TextArea fxWrittingTextArea;
     @FXML
@@ -41,39 +40,33 @@ public class ClientActivityController implements Initializable {
     @FXML
     private Button fxAddFileButton;
 
-    private boolean isLeft = true;
-
     private File fileToSend;
     private static final int MESSAGE_PANE_PADDING_VALUE = 5;
     private static final double MESSAGE_FRAME_CORNER_RADIUS_VALUE = 5.0;
     private static final String HYPERLINK_FONT = "System Bold Italic";
 
     private ClientCore clientCore;
-    private DataInputStream dataInputStream;
+
+    enum MessageStatus{
+        SENT, RECEIVED;
+    }
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
-        clientCore = new ClientCore();
-        listenForMessages();
-
-        setMessageAutoScroll();
-
-        Platform.runLater(() -> {
-            fxRootContainer.getScene().getWindow().setOnCloseRequest(windowEvent -> {
-                clientCore.closeConnection();
-            });
-        });
+        setMessageBoardAutoScroll();
 
         fxSendMessageButton.setOnAction(event -> {
             String text = fxWrittingTextArea.getText();
-            try {
-                clientCore.sendMessageToServer(text);
-                addMessageToMessagesContainer();
-            } catch (IOException e) {
-                log.info("can't establish connect with server");
+            fxWrittingTextArea.clear();
+            if(!"".equals(text)){
+                try {
+                    byte[][] data = clientCore.sendMessage(text);
+                    showMessageOnMessageBoard(MessageStatus.SENT, data[0], data[1]);
+                } catch (IOException e) {
+                    log.info("can't establish connect with server");
+                }
             }
-
         });
 
         fxAddFileButton.setOnAction(event -> {
@@ -81,32 +74,108 @@ public class ClientActivityController implements Initializable {
             if (fileToSend != null) {
                 log.info(fileToSend.getAbsolutePath());
                 try {
-                    clientCore.sendMessageToServer(fileToSend.getName(), fileToSend);
-                    addMessageToMessagesContainer();
+                    byte[][] data = clientCore.sendMessage(fileToSend);
+                    showMessageOnMessageBoard(MessageStatus.SENT, data[0], data[1]);
+                    fileToSend = null;
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    log.info("can't establish connect with server");
                 }
             }
         });
     }
 
-    public BorderPane createMessageBlock() {
+    public void setClientCore(ClientCore clientCore){
+        this.clientCore = clientCore;
+    }
+
+    public File chooseFileToSend(Window window) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("file chooser");
+        fileChooser.setInitialDirectory(new File("C:\\Users\\Kwasheniak\\Documents\\Różne\\zrózne\\Obrazy"));
+        return fileChooser.showOpenDialog(window);
+    }
+
+    public void showMessageOnMessageBoard(MessageStatus status, byte[] data1, byte[] data2){
+
+        String dataInform = new String(data1);
+        Label messageFrame = new Label();
+        messageFrame.setMaxWidth(fxRootContainer.getWidth() / 2);
+        messageFrame.setAlignment(Pos.TOP_LEFT);
+        messageFrame.setWrapText(true);
+        messageFrame.setPadding(new Insets(MESSAGE_PANE_PADDING_VALUE));
+        setAutoResizableMessageFrame(messageFrame);
+
+        if(dataInform.isEmpty()){
+            String s = new String(data2);
+            log.info("showMessageOnMessageBoard: " + s);
+            messageFrame.setText(s);
+        }else{
+            if (dataInform.endsWith(".jpg") || dataInform.endsWith(".png")) {
+                Image image = new Image(new ByteArrayInputStream(data2));
+                ImageView imageView = new ImageView(image);
+                imageView.setFitHeight(calculatePreviewImageHeight());
+                imageView.setPreserveRatio(true);
+                messageFrame.setGraphic(imageView);
+                setAutoResizableImageInMessageFrame(imageView, messageFrame);
+
+            } else {
+                messageFrame.setText(dataInform);
+                messageFrame.setUnderline(true);
+                messageFrame.setFont(new Font(HYPERLINK_FONT, messageFrame.getFont().getSize()));
+                messageFrame.setOnMouseEntered(mouseEvent -> {
+                    messageFrame.setFont(new Font(HYPERLINK_FONT, messageFrame.getFont().getSize()));
+                    messageFrame.setTextFill(Color.MEDIUMBLUE);
+                });
+                messageFrame.setOnMouseExited(mouseEvent -> {
+                    messageFrame.setFont(new Font(HYPERLINK_FONT, messageFrame.getFont().getSize()));
+                    messageFrame.setTextFill(Color.BLACK);
+                });
+            }
+            //messageFrame.setOnMouseClicked(mouseEvent -> showFileDownloadDialog(file));
+        }
+
         BorderPane messageBlock = new BorderPane();
         messageBlock.setPadding(new Insets(MESSAGE_PANE_PADDING_VALUE));
 
-        /*if (isLeft) {
-            messageBlock.setLeft(createMessageLabel(text));
-            isLeft = false;
-        } else {
-            messageBlock.setRight(createMessageLabel(text));
-            isLeft = true;
-        }*/
-        messageBlock.setRight(createMessageFrame(fxWrittingTextArea.getText()));
-        fxWrittingTextArea.clear();
-        return messageBlock;
+        if(MessageStatus.RECEIVED.equals(status)){
+            messageFrame.setBackground(new Background(new BackgroundFill(Color.LIGHTGRAY, new CornerRadii(MESSAGE_FRAME_CORNER_RADIUS_VALUE), null)));
+            messageBlock.setLeft(messageFrame);
+        }else{
+            messageFrame.setBackground(new Background(new BackgroundFill(Color.LIGHTBLUE, new CornerRadii(MESSAGE_FRAME_CORNER_RADIUS_VALUE), null)));
+            messageBlock.setRight(messageFrame);
+        }
+
+        fxMessageBoard.getChildren().add(messageBlock);
     }
 
-    public Label createMessageFrame(String text) {
+    /*public void showMessageOnMessageBoard(MessageStatus status) {
+        if(MessageStatus.RECEIVED.equals(status)){
+            fxMessageBoard.getChildren().add(createMessageBlock(status));
+        }else{
+            if (!"".equals(fxWrittingTextArea.getText()) || fileToSend != null) {
+                fxMessageBoard.getChildren().add(createMessageBlock(status));
+            }
+        }
+    }*/
+
+    /*public BorderPane createMessageBlock(MessageStatus status) {
+        BorderPane messageBlock = new BorderPane();
+        messageBlock.setPadding(new Insets(MESSAGE_PANE_PADDING_VALUE));
+        String text = fxWrittingTextArea.getText();
+        if(MessageStatus.RECEIVED.equals(status)){
+            Label messageFrame = createMessageFrame(text);
+            messageFrame.setTextFill(Color.LIGHTGRAY);
+            messageBlock.setLeft(messageFrame);
+        }else{
+            Label messageFrame = createMessageFrame(text);
+            messageFrame.setTextFill(Color.LIGHTBLUE);
+            messageBlock.setRight(messageFrame);
+        }
+        fxWrittingTextArea.clear();
+        return messageBlock;
+    }*/
+
+    /*public Label createMessageFrame(String text) {
         Label messageFrame = new Label(text);
         messageFrame.setMaxWidth(fxRootContainer.getWidth() / 2);
         messageFrame.setAlignment(Pos.TOP_LEFT);
@@ -119,9 +188,9 @@ public class ClientActivityController implements Initializable {
             addFileToMessageFrame(fileToSend, messageFrame);
 
         return messageFrame;
-    }
+    }*/
 
-    public void addFileToMessageFrame(File file, Label messageFrame) {
+    /*public void addFileToMessageFrame(File file, Label messageFrame) {
         if (file.getName().endsWith(".jpg") || file.getName().endsWith(".png")) {
             ImageView imageView = new ImageView(new Image(file.getAbsolutePath()));
             imageView.setFitHeight(calculatePreviewImageHeight());
@@ -143,8 +212,7 @@ public class ClientActivityController implements Initializable {
             });
         }
         messageFrame.setOnMouseClicked(mouseEvent -> showFileDownloadDialog(file));
-        fileToSend = null;
-    }
+    }*/
 
     public void showFileDownloadDialog(File file){
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
@@ -153,14 +221,8 @@ public class ClientActivityController implements Initializable {
         alert.show();
     }
 
-    public void addMessageToMessagesContainer() {
-        if (!"".equals(fxWrittingTextArea.getText()) || fileToSend != null) {
-            fxMessagesContainer.getChildren().add(createMessageBlock());
-        }
-    }
-
-    public void setMessageAutoScroll() {
-        fxMessagesContainer.heightProperty().addListener(observable -> fxScrollPane.setVvalue(1.0));
+    public void setMessageBoardAutoScroll() {
+        fxMessageBoard.heightProperty().addListener(observable -> fxScrollPane.setVvalue(1.0));
         //scrollPane.vvalueProperty().bind(vBox.heightProperty());
     }
 
@@ -176,35 +238,30 @@ public class ClientActivityController implements Initializable {
         }, fxRootContainer.widthProperty()));
     }
 
-    public File chooseFileToSend(Window window) {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("file chooser");
-        fileChooser.setInitialDirectory(new File("C:\\Users\\Kwasheniak\\Documents\\Różne\\zrózne\\Obrazy"));
-        return fileChooser.showOpenDialog(window);
-    }
-
     public double calculatePreviewImageHeight() {
         return fxRootContainer.getWidth() / 5;
     }
 
     public void listenForMessages(){
         new Thread(() -> {
-            while(clientCore.getSocket().isConnected()){
-                dataInputStream = clientCore.getDataInputStream();
-                //BufferedInputStream bufferedInputStream = new BufferedInputStream(dataInputStream);
-                try {
-                    //byte[] d = bufferedInputStream.readNBytes(dataInputStream.readInt());
-                    byte[] dataType = dataInputStream.readNBytes(dataInputStream.readInt());
-                    byte[] data = dataInputStream.readNBytes(dataInputStream.readInt());
-                    Platform.runLater(() -> createMessageLabel(dataType, data));
-                } catch (IOException e) {
-                    log.error(e);
+            try{
+                if(clientCore.getSocket() != null){
+                    while(clientCore.getSocket().isConnected()){
+                        DataInputStream dataInputStream = clientCore.getDataInputStream();
+                        log.info("waiting for message");
+                        byte[] dataType = dataInputStream.readNBytes(dataInputStream.readInt());
+                        byte[] data = dataInputStream.readNBytes(dataInputStream.readInt());
+                        log.info("message received");
+                        Platform.runLater(() -> showMessageOnMessageBoard(MessageStatus.RECEIVED, dataType, data));
+                    }
                 }
+            } catch (IOException e) {
+                log.error(e);
             }
         }).start();
     }
 
-    public void createMessageLabel(byte[] dataType, byte[] data){
+    /*public void createMessageLabel(byte[] dataType, byte[] data){
         String dataTypeName = new String(dataType);
         Label messageLabel = new Label();
         messageLabel.setMaxWidth(fxRootContainer.getWidth()/2);
@@ -265,6 +322,6 @@ public class ClientActivityController implements Initializable {
         messageBorderPane.setPadding(new Insets(5));
 
         messageBorderPane.setLeft(messageLabel);
-        fxMessagesContainer.getChildren().add(messageBorderPane);
-    }
+        fxMessageBoard.getChildren().add(messageBorderPane);
+    }*/
 }

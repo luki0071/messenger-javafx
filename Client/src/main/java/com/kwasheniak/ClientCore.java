@@ -7,12 +7,12 @@ import lombok.extern.log4j.Log4j2;
 import java.io.*;
 import java.net.Socket;
 
+
 @Log4j2
 @Setter
 @Getter
 public class ClientCore {
 
-    public static final String TEXT_MESSAGE_LABEL = "text";
     public static final String HOST = "localhost";
     public static final int PORT = 1234;
 
@@ -34,18 +34,20 @@ public class ClientCore {
         }
     }
 
-    public void sendMessageToServer(String textToSend) throws IOException {
-        byte[] type = TEXT_MESSAGE_LABEL.getBytes();
+    public byte[][] sendMessage(String textToSend) throws IOException {
+        byte[] type = new byte[0];
         byte[] bytes = textToSend.getBytes();
         sendMessageToServer(type, bytes);
+        return new byte[][]{type, bytes};
     }
 
-    public void sendMessageToServer(String fileName, File fileToSend) throws IOException {
-        byte[] name = fileName.getBytes();
+    public byte[][] sendMessage(File fileToSend) throws IOException {
+        byte[] fileName = fileToSend.getName().getBytes();
         FileInputStream fileInputStream = new FileInputStream(fileToSend.getAbsolutePath());
-        byte[] bytes = fileInputStream.readNBytes((int)fileToSend.length());
+        byte[] file = fileInputStream.readNBytes((int)fileToSend.length());
         fileInputStream.close();
-        sendMessageToServer(name, bytes);
+        sendMessageToServer(fileName, file);
+        return new byte[][]{fileName, file};
     }
 
     private void sendMessageToServer(byte[] labelBytes, byte[] dataBytes) throws IOException {

@@ -14,6 +14,7 @@ public class ClientApplication extends Application {
         launch();
     }
 
+    private ClientCore clientCore;
     @Override
     public void start(Stage stage) throws Exception {
 
@@ -21,10 +22,17 @@ public class ClientApplication extends Application {
         Scene scene = new Scene(loader.load());
         stage.setScene(scene);
         //stage.initStyle(StageStyle.UNDECORATED);
+
+        clientCore = new ClientCore();
+        stage.setOnCloseRequest(windowEvent -> clientCore.closeConnection());
+
+        ClientActivityController controller = loader.getController();
+        controller.setClientCore(clientCore);
+        controller.listenForMessages();
+
         stage.show();
 
         setStageMinSize(stage);
-
     }
 
     private void setStageMinSize(Stage stage){

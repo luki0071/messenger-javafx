@@ -17,7 +17,7 @@
     </bottom>
    <center>
        <ScrollPane fx:id="fxScrollPane" fitToWidth="true" hbarPolicy="NEVER" pannable="true" style="-fx-focus-color: transparent; -fx-faint-focus-color: transparent;" vbarPolicy="NEVER" BorderPane.alignment="CENTER">
-           <VBox fx:id="fxMessagesContainer" />
+           <VBox fx:id="fxMessageBoard" />
        </ScrollPane>
    </center>
    <!--<top>
