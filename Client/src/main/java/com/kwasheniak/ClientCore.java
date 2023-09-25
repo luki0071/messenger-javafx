@@ -44,7 +44,7 @@ public class ClientCore {
     public byte[][] sendMessage(File fileToSend) throws IOException {
         byte[] fileName = fileToSend.getName().getBytes();
         FileInputStream fileInputStream = new FileInputStream(fileToSend.getAbsolutePath());
-        byte[] file = fileInputStream.readNBytes((int)fileToSend.length());
+        byte[] file = fileInputStream.readNBytes((int) fileToSend.length());
         fileInputStream.close();
         sendMessageToServer(fileName, file);
         return new byte[][]{fileName, file};
@@ -57,15 +57,15 @@ public class ClientCore {
         dataOutputStream.write(dataBytes);
     }
 
-    public void closeConnection(){
-        try{
-            if(dataInputStream != null)
+    public void closeConnection() {
+        try {
+            if (dataInputStream != null)
                 dataInputStream.close();
-            if(dataOutputStream != null)
+            if (dataOutputStream != null)
                 dataOutputStream.close();
-            if(socket != null)
+            if (socket != null)
                 socket.close();
-        }catch (IOException e){
+        } catch (IOException e) {
             log.error("closeConnection() " + e);
         }
     }
