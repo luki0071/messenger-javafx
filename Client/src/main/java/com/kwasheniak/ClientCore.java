@@ -1,5 +1,6 @@
 package com.kwasheniak;
 
+import javafx.application.Platform;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
@@ -55,6 +56,22 @@ public class ClientCore {
         dataOutputStream.write(labelBytes);
         dataOutputStream.writeInt(dataBytes.length);
         dataOutputStream.write(dataBytes);
+    }
+
+    public void listenForMessages(ClientController controller) {
+        new Thread(() -> {
+            try {
+                if (socket != null) {
+                    while (socket.isConnected()) {
+                        byte[] dataType = dataInputStream.readNBytes(dataInputStream.readInt());
+                        byte[] data = dataInputStream.readNBytes(dataInputStream.readInt());
+                        Platform.runLater(() -> controller.addMessageToMessageBoard(MessageStatus.RECEIVED, new byte[][]{dataType, data}));
+                    }
+                }
+            } catch (IOException e) {
+                log.error(e);
+            }
+        }).start();
     }
 
     public void closeConnection() {
