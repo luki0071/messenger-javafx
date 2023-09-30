@@ -10,7 +10,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextFlow;
@@ -44,9 +43,8 @@ public class ClientController implements Initializable {
     private File fileToSend;
     private static final int DEFAULT_PADDING_VALUE = 5;
     private static final double MESSAGE_LABEL_CORNER_RADIUS_VALUE = 5.0;
-    private static final String HYPERLINK_FONT = "System Bold Italic";
 
-    private ClientCore clientCore;
+    private ClientService clientCore;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -81,7 +79,7 @@ public class ClientController implements Initializable {
         });
     }
 
-    public void setClientCore(ClientCore clientCore) {
+    public void setClientCore(ClientService clientCore) {
         this.clientCore = clientCore;
     }
 
@@ -110,35 +108,6 @@ public class ClientController implements Initializable {
         return messageBlock;
     }
 
-    /*private Label createMessageLabel(byte[] title, byte[] data) {
-        String fileName = new String(title);
-        Label messageLabel = new Label();
-        messageLabel.setMaxWidth(calculateMessageLabelMaxWidth());
-        messageLabel.setAlignment(Pos.TOP_LEFT);
-        messageLabel.setWrapText(true);
-        messageLabel.setPadding(new Insets(DEFAULT_PADDING_VALUE));
-        setAutoResizableMessageLabel(messageLabel);
-        if (fileName.isEmpty()) {
-            String textMessage = new String(data);
-            messageLabel.setText(textMessage);
-        } else {
-            if (fileName.endsWith(".jpg") || fileName.endsWith(".png")) {
-                Image image = getImageFromData(data);
-                ImageView imageView = getImageViewOfImage(image);
-                messageLabel.setGraphic(imageView);
-                setAutoResizableImageInMessageFrame(imageView, messageLabel);
-            } else {
-                messageLabel.setText(fileName);
-                messageLabel.setUnderline(true);
-                messageLabel.setFont(new Font(HYPERLINK_FONT, messageLabel.getFont().getSize()));
-                messageLabel.setOnMouseEntered(mouseEvent -> messageLabel.setTextFill(Color.MEDIUMBLUE));
-                messageLabel.setOnMouseExited(mouseEvent -> messageLabel.setTextFill(Color.BLACK));
-            }
-            messageLabel.setOnMouseClicked(mouseEvent -> showFileDownloadDialog(fileName, data));
-        }
-        return messageLabel;
-    }*/
-
     private TextFlow createMessageLabel(byte[] name, byte[] data) {
         TextFlow messageLabel = new TextFlow();
         messageLabel.setMaxWidth(calculateMessageLabelMaxWidth());
@@ -147,33 +116,48 @@ public class ClientController implements Initializable {
         setAutoResizableMessageLabel(messageLabel);
         String fileName = new String(name);
         if (fileName.isEmpty()) {
-            addTextToMessageLabel(data, messageLabel);
+            messageLabel.getChildren().add(getTextNode(data));
+            return messageLabel;
+        }
+        if (fileName.endsWith(".jpg") || fileName.endsWith(".png")) {
+            messageLabel.getChildren().add(getImageViewNode(fileName, data));
         } else {
-            addDownloadableContentToMessageLabel(fileName, data, messageLabel);
+            messageLabel.getChildren().add(getHyperlinkNode(fileName, data));
         }
         return messageLabel;
     }
 
-    private void addTextToMessageLabel(byte[] data, TextFlow messageLabel){
+    private Text getTextNode(byte[] data){
         String textMessage = new String(data);
-        messageLabel.getChildren().add(new Text(textMessage));
+        return new Text(textMessage);
     }
-    private void addDownloadableContentToMessageLabel(String fileName, byte[] data, TextFlow messageLabel){
+
+    private ImageView getImageViewNode(String fileName, byte[] data){
+        Image image = getImageFromData(data);
+        ImageView imageView = getImageViewOfImage(image);
+        imageView.setOnMouseClicked(mouseEvent -> showFileDownloadDialog(fileName, data));
+        setAutoResizableImageInMessageFrame(imageView);
+        return imageView;
+    }
+
+    private Hyperlink getHyperlinkNode(String fileName, byte[] data){
+        Hyperlink hyperlink = new Hyperlink(fileName);
+        hyperlink.setOnAction(event -> showFileDownloadDialog(fileName, data));
+        return hyperlink;
+    }
+    /*private void addDownloadableContentToMessageLabel(String fileName, byte[] data, TextFlow messageLabel){
         if (fileName.endsWith(".jpg") || fileName.endsWith(".png")) {
             Image image = getImageFromData(data);
             ImageView imageView = getImageViewOfImage(image);
+            imageView.setOnMouseClicked(mouseEvent -> showFileDownloadDialog(fileName, data));
             messageLabel.getChildren().add(imageView);
             setAutoResizableImageInMessageFrame(imageView);
         } else {
-            Text text = new Text(fileName);
-            text.setUnderline(true);
-            text.setFont(new Font(HYPERLINK_FONT, text.getFont().getSize()));
-            messageLabel.setOnMouseEntered(mouseEvent -> text.setFill(Color.MEDIUMBLUE));
-            messageLabel.setOnMouseExited(mouseEvent -> text.setFill(Color.BLACK));
-            messageLabel.getChildren().add(text);
+            Hyperlink hyperlink = new Hyperlink(fileName);
+            hyperlink.setOnAction(event -> showFileDownloadDialog(fileName, data));
+            messageLabel.getChildren().add(hyperlink);
         }
-        messageLabel.setOnMouseClicked(mouseEvent -> showFileDownloadDialog(fileName, data));
-    }
+    }*/
 
     private Image getImageFromData(byte[] data) {
         try (ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(data)) {
@@ -223,24 +207,21 @@ public class ClientController implements Initializable {
     }
 
     public void setAutoScrollMessageBoard() {
-        fxMessageBoard.heightProperty().addListener((observableValue, oldValue, newValue) -> fxScrollPane.setVvalue((Double) newValue));
+        fxMessageBoard.heightProperty().addListener(
+                (observableValue, oldValue, newValue) -> fxScrollPane.setVvalue((Double) newValue));
     }
 
     public void setAutoResizableMessageLabel(TextFlow messageFrame) {
-        fxRootContainer.widthProperty().addListener(observable -> messageFrame.setMaxWidth(calculateMessageLabelMaxWidth()));
+        fxRootContainer.widthProperty().addListener(
+                observable -> messageFrame.setMaxWidth(calculateMessageLabelMaxWidth()));
     }
 
     public void setAutoResizableImageInMessageFrame(ImageView image) {
-        image.fitHeightProperty().bind(Bindings.createDoubleBinding(this::calculateImageViewHeight, fxRootContainer.heightProperty()));
-
-        /*messageFrame.graphicProperty().bind(Bindings.createObjectBinding(() -> {
-            image.setFitHeight(calculatePreviewImageHeight());
-            return image;
-        }, fxRootContainer.widthProperty()));*/
+        image.fitHeightProperty().bind(
+                Bindings.createDoubleBinding(this::calculateImageViewHeight, fxRootContainer.heightProperty()));
     }
 
     public double calculateImageViewHeight() {
-        //return fxRootContainer.getWidth() / 5;
         return fxRootContainer.getHeight() / 5;
     }
 

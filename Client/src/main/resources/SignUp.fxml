@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.effect.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.text.*?>
+
+<BorderPane fx:id="fxRootContainer" prefHeight="600.0" prefWidth="600.0" style="-fx-background-color: lightblue;" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.kwasheniak.SignUpController">
+    <center>
+        <VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" style="-fx-background-color: white; -fx-background-radius: 5;" BorderPane.alignment="CENTER">
+            <Label text="Register">
+                <font>
+                    <Font size="35.0" />
+                </font>
+            </Label>
+            <HBox alignment="CENTER">
+                <padding>
+                    <Insets bottom="5.0" top="5.0" />
+                </padding>
+                <TextField fx:id="fxUsernameField" promptText="username" HBox.hgrow="ALWAYS" />
+            </HBox>
+            <HBox alignment="CENTER">
+                <padding>
+                    <Insets bottom="5.0" top="5.0" />
+                </padding>
+                <TextField fx:id="fxEmailField" promptText="email" HBox.hgrow="ALWAYS" />
+            </HBox>
+            <HBox alignment="CENTER">
+                <padding>
+                    <Insets bottom="5.0" top="5.0" />
+                </padding>
+                <TextField fx:id="fxPasswordField" promptText="password" HBox.hgrow="ALWAYS">
+                    <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                    </padding>
+                </TextField>
+            </HBox>
+            <HBox alignment="CENTER">
+                <padding>
+                    <Insets bottom="5.0" top="5.0" />
+                </padding>
+                <TextField fx:id="fxRepeatPasswordField" promptText="repeat password" HBox.hgrow="ALWAYS" />
+            </HBox>
+            <Button fx:id="fxSignUpButton" mnemonicParsing="false" prefHeight="30.0" prefWidth="200.0" style="-fx-background-color: #0374f9;" text="Confirm" textAlignment="CENTER" textFill="WHITE">
+                <VBox.margin>
+                    <Insets top="5.0" />
+                </VBox.margin>
+            <font>
+               <Font name="System Bold" size="12.0" />
+            </font>
+            </Button>
+            <Separator>
+            <padding>
+               <Insets top="10.0" />
+            </padding></Separator>
+            <Hyperlink fx:id="fxLoginLink" text="Log in" />
+            <padding>
+                <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+            </padding>
+            <effect>
+                <DropShadow blurType="ONE_PASS_BOX" height="30.0" radius="14.5" width="30.0">
+                    <color>
+                        <Color red="0.6313725709915161" green="0.6313725709915161" blue="0.6313725709915161" />
+                    </color>
+                </DropShadow>
+            </effect>
+        </VBox>
+
+    </center>
+</BorderPane>

@@ -12,7 +12,7 @@ import java.net.Socket;
 @Log4j2
 @Setter
 @Getter
-public class ClientCore {
+public class ClientService {
 
     public static final String HOST = "localhost";
     public static final int PORT = 1234;
@@ -21,14 +21,11 @@ public class ClientCore {
     private DataOutputStream dataOutputStream;
     private DataInputStream dataInputStream;
 
-    public ClientCore() {
+    public ClientService() {
         try {
             this.socket = new Socket(HOST, PORT);
             this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
             this.dataInputStream = new DataInputStream(socket.getInputStream());
-            log.info(socket.toString());
-            log.info(dataOutputStream.toString());
-            log.info(dataInputStream.toString());
         } catch (IOException e) {
             log.error("ClientCore " + e);
             closeConnection();
@@ -72,6 +69,22 @@ public class ClientCore {
                 log.error(e);
             }
         }).start();
+    }
+
+    public Boolean loginToServer(String username, String password) throws IOException {
+        byte[] user = username.getBytes();
+        byte[] pass = password.getBytes();
+        dataOutputStream.writeInt(user.length);
+        dataOutputStream.write(user);
+        log.info("user sent");
+        dataOutputStream.writeInt(pass.length);
+        dataOutputStream.write(pass);
+        log.info("password sent");
+        log.info("waiting for response...");
+
+        boolean bool = dataInputStream.readBoolean();
+        log.info("response received");
+        return bool;
     }
 
     public void closeConnection() {

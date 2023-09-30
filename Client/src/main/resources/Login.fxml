@@ -31,20 +31,23 @@
                    </padding>
             </TextField>
            </HBox>
-           <Button fx:id="fxSignInButton" mnemonicParsing="false" prefHeight="30.0" prefWidth="200.0" text="Sign in" textAlignment="CENTER">
+           <Button fx:id="fxLoginButton" mnemonicParsing="false" prefHeight="30.0" prefWidth="200.0" style="-fx-background-color: #0374f9;" text="Login" textAlignment="CENTER" textFill="WHITE">
                <opaqueInsets>
                    <Insets />
                </opaqueInsets>
             <VBox.margin>
                <Insets top="5.0" />
             </VBox.margin>
+            <font>
+               <Font name="System Bold" size="12.0" />
+            </font>
            </Button>
            <Hyperlink fx:id="fxForgotPasswordLink" text="Forgot password?">
             <padding>
                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
             </padding></Hyperlink>
            <Separator />
-           <Hyperlink fx:id="fxSignUpLink" text="Sign up">
+           <Hyperlink fx:id="fxRegisterLink" text="Register">
             <padding>
                <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
             </padding></Hyperlink>
