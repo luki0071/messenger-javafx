@@ -17,16 +17,17 @@ public class ClientApplication extends Application {
     public void start(Stage stage) throws Exception {
 
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/Login.fxml"));
-        //FXMLLoader loader = new FXMLLoader(getClass().getResource("/Client.fxml"));
         Scene scene = new Scene(loader.load());
         stage.setScene(scene);
-        //stage.initStyle(StageStyle.UNDECORATED);
-
         stage.show();
 
         setStageMinSize(stage);
     }
 
+    /**
+     * sets min size of window
+     * @param stage object of window which displays content
+     */
     private void setStageMinSize(Stage stage) {
         stage.setHeight(stage.getScene().getHeight());
         stage.setWidth(stage.getScene().getWidth());

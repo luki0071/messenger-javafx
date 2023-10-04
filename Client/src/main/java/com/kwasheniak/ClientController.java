@@ -59,7 +59,7 @@ public class ClientController implements Initializable {
                     byte[][] data = clientCore.sendMessage(text);
                     addMessageToMessageBoard(MessageStatus.SENT, data);
                 } catch (IOException e) {
-                    log.info("can't establish connect with server");
+                    log.info("cannot establish connect with server");
                 }
             }
         });
@@ -73,7 +73,7 @@ public class ClientController implements Initializable {
                     addMessageToMessageBoard(MessageStatus.SENT, data);
                     fileToSend = null;
                 } catch (IOException e) {
-                    log.info("can't establish connect with server");
+                    log.info("cannot establish connect with server");
                 }
             }
         });

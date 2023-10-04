@@ -7,61 +7,63 @@
 <?import javafx.scene.paint.*?>
 <?import javafx.scene.text.*?>
 
-<BorderPane fx:id="fxRootContainer" prefHeight="600.0" prefWidth="600.0" style="-fx-background-color: lightblue;" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.kwasheniak.LoginController">
-   <center>
-       <VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" style="-fx-background-color: white; -fx-background-radius: 5;" BorderPane.alignment="CENTER">
-           <Label text="Messenger">
-               <font>
-                   <Font size="35.0" />
-               </font>
-           </Label>
-           <HBox alignment="CENTER">
-               <padding>
-                   <Insets bottom="5.0" top="5.0" />
-               </padding>
-               <TextField fx:id="fxUsernameField" promptText="username" HBox.hgrow="ALWAYS" />
-           </HBox>
-           <HBox alignment="CENTER">
-               <padding>
-                   <Insets bottom="5.0" top="5.0" />
-               </padding>
-               <TextField fx:id="fxPasswordField" promptText="password" HBox.hgrow="ALWAYS">
-                   <padding>
-                       <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                   </padding>
-            </TextField>
-           </HBox>
-           <Button fx:id="fxLoginButton" mnemonicParsing="false" prefHeight="30.0" prefWidth="200.0" style="-fx-background-color: #0374f9;" text="Login" textAlignment="CENTER" textFill="WHITE">
-               <opaqueInsets>
-                   <Insets />
-               </opaqueInsets>
-            <VBox.margin>
-               <Insets top="5.0" />
-            </VBox.margin>
-            <font>
-               <Font name="System Bold" size="12.0" />
-            </font>
-           </Button>
-           <Hyperlink fx:id="fxForgotPasswordLink" text="Forgot password?">
-            <padding>
-               <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-            </padding></Hyperlink>
-           <Separator />
-           <Hyperlink fx:id="fxRegisterLink" text="Register">
-            <padding>
-               <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-            </padding></Hyperlink>
-         <padding>
-            <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
-         </padding>
-         <effect>
-            <DropShadow blurType="ONE_PASS_BOX" height="30.0" radius="14.5" width="30.0">
-               <color>
-                  <Color red="0.6313725709915161" green="0.6313725709915161" blue="0.6313725709915161" />
-               </color>
-            </DropShadow>
-         </effect>
-       </VBox>
+<StackPane fx:id="fxRootContainer" prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.kwasheniak.LoginController">
+    <BorderPane fx:id="fxLoginContainer" style="-fx-background-color: lightblue;">
+        <center>
+            <VBox fx:id="fxLoginFormBox" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" style="-fx-background-color: white; -fx-background-radius: 5;" BorderPane.alignment="CENTER">
+                <Label text="Messenger">
+                    <font>
+                        <Font size="35.0" />
+                    </font>
+                </Label>
+                <HBox alignment="CENTER">
+                    <padding>
+                        <Insets bottom="5.0" top="5.0" />
+                    </padding>
+                    <TextField fx:id="fxUsernameField" promptText="username" HBox.hgrow="ALWAYS" />
+                </HBox>
+                <HBox alignment="CENTER">
+                    <padding>
+                        <Insets bottom="5.0" top="5.0" />
+                    </padding>
+                    <TextField fx:id="fxPasswordField" promptText="password" HBox.hgrow="ALWAYS">
+                        <padding>
+                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                        </padding>
+                    </TextField>
+                </HBox>
+                <Button fx:id="fxLoginButton" mnemonicParsing="false" prefHeight="30.0" prefWidth="200.0" style="-fx-background-color: #0374f9;" text="Login" textAlignment="CENTER" textFill="WHITE">
+                    <opaqueInsets>
+                        <Insets />
+                    </opaqueInsets>
+                    <VBox.margin>
+                        <Insets top="5.0" />
+                    </VBox.margin>
+                    <font>
+                        <Font name="System Bold" size="12.0" />
+                    </font>
+                </Button>
+                <Hyperlink fx:id="fxForgotPasswordLink" text="Forgot password?">
+                    <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                    </padding></Hyperlink>
+                <Separator />
+                <Hyperlink fx:id="fxRegisterLink" text="Register">
+                    <padding>
+                        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                    </padding></Hyperlink>
+                <padding>
+                    <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
+                </padding>
+                <effect>
+                    <DropShadow blurType="ONE_PASS_BOX" height="30.0" radius="14.5" width="30.0">
+                        <color>
+                            <Color red="0.6313725709915161" green="0.6313725709915161" blue="0.6313725709915161" />
+                        </color>
+                    </DropShadow>
+                </effect>
+            </VBox>
 
-   </center>
-</BorderPane>
+        </center>
+    </BorderPane>
+</StackPane>
