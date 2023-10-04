@@ -9,7 +9,7 @@ import lombok.extern.log4j.Log4j2;
 
 @Log4j2
 public class ServerApplication extends Application {
-    private ServerService serverCore;
+    private ServerService serverService;
 
     public static void main(String[] args) {
         launch();
@@ -23,18 +23,15 @@ public class ServerApplication extends Application {
         stage.setScene(scene);
         stage.show();
 
-        //closes server on window closing
+        //closes connection with server on window closing
         stage.setOnCloseRequest(windowEvent -> {
-            serverCore.closeAllConnection();
+            serverService.closeAllConnection();
         });
 
-        new Thread(new Task<Void>() {
-            @Override
-            protected Void call() {
-                serverCore = new ServerService(1234, loader.getController());
-                serverCore.createServer();
-                return null;
-            }
+        //server starts
+        new Thread(() -> {
+            serverService = new ServerService(1234, loader.getController());
+            serverService.createServer();
         }).start();
     }
 }

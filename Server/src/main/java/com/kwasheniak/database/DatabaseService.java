@@ -9,45 +9,46 @@ import java.sql.*;
 public class DatabaseService {
     private static final String USER = "root";
     private static final String PASSWORD = "admin";
-    private static final String DATABASE = "jdbc:mysql://localhost:3306/messengerjfx";
+    public static final String DATABASE = "jdbc:mysql://localhost:3306/messengerjfx";
 
     @Getter
     private static Connection connection;
-    public static void establishConnection(){
-        try {
+
+    /**
+     * initiate connection with database
+     * @throws SQLException
+     */
+    public static void establishConnection() throws SQLException{
+        if(!isConnectionAvailable()){
             connection = DriverManager.getConnection(DATABASE, USER, PASSWORD);
-            log.info("connected with database");
-        } catch (SQLException e) {
-            log.info("couldn't connect to database " + e);
+            log.info("connected to database: " + DATABASE);
+        }else{
+            log.info("database is already connected");
         }
+
     }
 
-    public static Boolean isConnectionAvailable(){
-        return connection != null;
+    /**
+     * check if connection with database is available
+     * @return true if connection is available and false if no
+     * @throws SQLException
+     */
+    public static Boolean isConnectionAvailable() throws SQLException {
+        return connection != null && !connection.isClosed();
     }
 
-    public static Boolean isUserInUsersTable(String username, String password){
+    /**
+     * closes connection with database
+     * @throws SQLException
+     */
+    public static void closeConnection() throws SQLException{
         if(isConnectionAvailable()){
-            try {
-                Statement statement = connection.createStatement();
-                String query = "select * from users where username like '" + username + "' and "
-                        + "password like '" + password + "';";
-                ResultSet resultSet = statement.executeQuery(query);
-                return resultSet.next();
-            } catch (SQLException e) {
-                log.info(e);
-            }
+            connection.close();
+            connection = null;
+            log.info("disconnected from database");
+        }else{
+            log.info("cannot close connection with database because connection is null");
         }
-        return false;
-    }
 
-    public static void closeConnection(){
-        if(isConnectionAvailable()){
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 }

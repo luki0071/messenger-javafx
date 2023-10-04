@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
 <BorderPane fx:id="fxRootContainer" prefHeight="600.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.kwasheniak.ServerController">
    <center>
-      <ScrollPane fx:id="fxScrollPane" fitToWidth="true" hbarPolicy="NEVER" pannable="true" vbarPolicy="NEVER" BorderPane.alignment="CENTER">
-         <VBox fx:id="fxMessageBoard" />
+      <ScrollPane fx:id="fxScrollPane" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" pannable="true" vbarPolicy="NEVER" BorderPane.alignment="CENTER">
+         <TextArea fx:id="fxLogsBoard" editable="false" />
       </ScrollPane>
    </center>
 </BorderPane>
