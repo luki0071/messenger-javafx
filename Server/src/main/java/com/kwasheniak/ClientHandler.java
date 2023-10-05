@@ -1,7 +1,6 @@
 package com.kwasheniak;
 
 import com.kwasheniak.database.DatabaseHandler;
-import com.kwasheniak.database.DatabaseService;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
@@ -11,7 +10,6 @@ import java.io.IOException;
 import java.net.Socket;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.function.Predicate;
 
 @Log4j2
 public class ClientHandler implements Runnable {
@@ -26,41 +24,52 @@ public class ClientHandler implements Runnable {
     private ServerController controller;
 
     public ClientHandler(Socket socket, ServerController controller) {
-        try {
-            this.socket = socket;
-            this.controller = controller;
-            this.dataInputStream = new DataInputStream(socket.getInputStream());
-            this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
-            //this.clientPort = socket.getPort();
 
-            answerToClientIfHeIsLogged();
+        try {
+            setConnectionWithClient(socket, controller);
+            String loginOrSignUp = new String(dataInputStream.readNBytes(dataInputStream.readInt()));
+            String username = new String(dataInputStream.readNBytes(dataInputStream.readInt()));
+            String password = new String(dataInputStream.readNBytes(dataInputStream.readInt()));
+            getDataFromClientOnFirstConnection(loginOrSignUp, username, password);
         } catch (IOException e) {
-            log.error("ClientHandler " + e);
-            closeConnection();
+            log.error(e);
         }
     }
 
-    public void answerToClientIfHeIsLogged() throws IOException {
+    public void setConnectionWithClient(Socket socket, ServerController controller) throws IOException {
+        /*try {
+
+        } catch (IOException e) {
+            log.error("ClientHandler " + e);
+            closeConnection();
+        }*/
+        this.socket = socket;
+        this.controller = controller;
+        this.dataInputStream = new DataInputStream(socket.getInputStream());
+        this.dataOutputStream = new DataOutputStream(socket.getOutputStream());
+    }
+
+    public void getDataFromClientOnFirstConnection(String login, String username, String password) throws IOException {
+        if(login.equals("login")){
+            validateUserToLogIn(username, password);
+            return;
+        }
+        if(login.equals("signup")){
+            validateUserToSignUp(username, password);
+        }
+    }
+
+    public void validateUserToLogIn(String username, String password) throws IOException {
         //If client's username and password are in database
         //send to client true value which means he is logged and added to clients static list
-        String username = new String(dataInputStream.readNBytes(dataInputStream.readInt()));
-        String password = new String(dataInputStream.readNBytes(dataInputStream.readInt()));
         try {
-            Thread.sleep(3000);
-            if(DatabaseHandler.isUserInUsersTable(username, password)) {
-
-                //controller.addLogOnLogsBoard("client exists");
+            if (DatabaseHandler.isUserInUsersTable(username, password)) {
                 log.info("client exists");
-                if(clients.stream().anyMatch(clientHandler -> username.equals(clientHandler.clientUsername))){
+                if (isUserAlreadyLogged(username)) {
                     log.info(username + " is already logged");
-                    try {
-                        dataOutputStream.writeBoolean(false);
-                    } catch (IOException e) {
-                        log.error(e);
-                    }
+                    dataOutputStream.writeBoolean(false);
                     closeConnection();
-                }else{
-
+                } else {
                     dataOutputStream.writeBoolean(true);
                     clientUsername = username;
                     clients.add(this);
@@ -68,48 +77,66 @@ public class ClientHandler implements Runnable {
             }
             //send to client false value which means he is not logged
             //closes socket connection with server
-            else{
-                //controller.addLogOnLogsBoard("client not exists");
+            else {
                 log.info("client not exists");
                 dataOutputStream.writeBoolean(false);
                 closeConnection();
             }
-        } catch (SQLException | InterruptedException e) {
-            log.error(e);
+        } catch (SQLException e) {
+            log.error("couldn't get answer from database: " + e);
         }
     }
 
-    /*public Boolean isClientInDatabase(String username, String password){
+    public void validateUserToSignUp(String username, String password) throws IOException {
         try {
-            if(DatabaseService.isConnectionAvailable()){
-                return DatabaseService.isUserInUsersTable(username, password);
-            }else{
-                //todo: send message to client that he cannot log in at the moment
-                log.info("connection with database is unavailable");
-                closeConnection();
+            if (DatabaseHandler.isUserInUsersTable(username)) {
+                log.info("username is already used by someone else");
+                byte[] userInfo = "username is already used by someone else".getBytes();
+                dataOutputStream.writeBoolean(false);
+                dataOutputStream.writeInt(userInfo.length);
+                dataOutputStream.write(userInfo);
+                return;
             }
-        } catch (IOException | SQLException e) {
-            log.error("isClientInDatabase(): " + e);
+            if (DatabaseHandler.addUserToUsersTable(username, password)) {
+                log.info("user successfully signed up");
+                byte[] userInfo = "user successfully signed up".getBytes();
+                dataOutputStream.writeBoolean(true);
+                dataOutputStream.writeInt(userInfo.length);
+                dataOutputStream.write(userInfo);
+            }else{
+                log.info("couldn't sign up");
+                byte[] userInfo = "couldn't sign up".getBytes();
+                dataOutputStream.writeBoolean(false);
+                dataOutputStream.writeInt(userInfo.length);
+                dataOutputStream.write(userInfo);
+            }
+        } catch (SQLException e) {
+            log.error("cant sign up right now " + e);
+            byte[] userInfo = "cant sign up right now".getBytes();
+            dataOutputStream.writeBoolean(false);
+            dataOutputStream.writeInt(userInfo.length);
+            dataOutputStream.write(userInfo);
         }
-        return false;
-    }*/
+    }
+
+    public boolean isUserAlreadyLogged(String username) {
+        return clients.stream().anyMatch(clientHandler -> username.equals(clientHandler.clientUsername));
+    }
 
     @Override
     public void run() {
-        //controller.addLogOnLogsBoard("connected with client");
         log.info("connected with client");
-        try{
+        try {
             while (socket.isConnected()) {
                 byte[] dataType = dataInputStream.readNBytes(dataInputStream.readInt());
                 byte[] data = dataInputStream.readNBytes(dataInputStream.readInt());
 
                 broadcastMessage(dataType, data);
             }
-        }catch (IOException e){
+        } catch (IOException e) {
             closeConnection();
             removeClientHandler();
         }
-        //controller.addLogOnLogsBoard("disconnected with client");
         log.info("disconnected with client");
     }
 
@@ -131,13 +158,13 @@ public class ClientHandler implements Runnable {
 
     public void closeConnection() {
         try {
-            if (dataInputStream != null ){
+            if (dataInputStream != null) {
                 dataInputStream.close();
             }
-            if (dataOutputStream != null){
+            if (dataOutputStream != null) {
                 dataOutputStream.close();
             }
-            if (socket != null){
+            if (socket != null) {
                 socket.close();
             }
         } catch (IOException e) {
@@ -145,13 +172,13 @@ public class ClientHandler implements Runnable {
         }
     }
 
-    private void removeClientHandler() {
-        clients.remove(this);
-    }
-
-    public static void closeConnectionWithAllClients(){
+    public static void closeConnectionWithAllClients() {
         clients.forEach(ClientHandler::closeConnection);
         clients.clear();
+    }
+
+    private void removeClientHandler() {
+        clients.remove(this);
     }
 
 }

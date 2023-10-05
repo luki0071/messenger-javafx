@@ -3,7 +3,7 @@ package com.kwasheniak;
 import com.kwasheniak.database.DatabaseService;
 import lombok.extern.log4j.Log4j2;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.SQLException;
@@ -37,9 +37,10 @@ public class ServerService {
 
     /**
      * listening for connecting clients
+     *
      * @throws IOException
      */
-    public void listenForClients() throws IOException{
+    public void listenForClients() throws IOException {
         //loop works until server is open
         while (serverSocket != null && !serverSocket.isClosed()) {
             //accept() holds loop until one of client connects to server
@@ -53,12 +54,13 @@ public class ServerService {
     /**
      * creates ClientHandler object which handle with connected client
      * and starts new thread for connection with client and server
+     *
      * @param socket socket object of connected client
      */
-    public void createClientConnectionThread(Socket socket){
+    public void createClientConnectionThread(Socket socket) {
         ClientHandler clientHandler = new ClientHandler(socket, controller);
         //if connection with client is still available new thread is started
-        if(!clientHandler.getSocket().isClosed()){
+        if (!clientHandler.getSocket().isClosed()) {
             Thread thread = new Thread(clientHandler);
             thread.start();
         }
@@ -67,7 +69,7 @@ public class ServerService {
     /**
      * closes connection with all clients
      */
-    public void closeConnectionWithClients(){
+    public void closeConnectionWithClients() {
         ClientHandler.closeConnectionWithAllClients();
     }
 
@@ -88,7 +90,7 @@ public class ServerService {
     /**
      * connects to database
      */
-    public void connectToDatabase(){
+    public void connectToDatabase() {
         try {
             DatabaseService.establishConnection();
         } catch (SQLException e) {
@@ -99,7 +101,7 @@ public class ServerService {
     /**
      * disconnects from database
      */
-    public void disconnectFromDatabase(){
+    public void disconnectFromDatabase() {
         try {
             DatabaseService.closeConnection();
         } catch (SQLException e) {
@@ -110,7 +112,7 @@ public class ServerService {
     /**
      * closes connection with clients, database and server
      */
-    public void closeAllConnection(){
+    public void closeAllConnection() {
         closeConnectionWithClients();
         disconnectFromDatabase();
         closeServer();
