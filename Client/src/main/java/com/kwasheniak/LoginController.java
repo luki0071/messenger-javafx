@@ -55,17 +55,21 @@ public class LoginController implements Initializable {
             try {
                 String username = fxUsernameField.getText();
                 String password = fxPasswordField.getText();
-                if(!username.isEmpty() && !password.isEmpty()){
-                    clientService = new ClientService();
-                    if(clientService.isConnectedToServer()){
-                        clientService.sendLoginToServer(username,password);
-                        new Thread(getWaitingForResponseFromServerTask(event)).start();
-                    }else{
-                        log.info("no connection with server couldn't send login data");
-                    }
-                }else{
+                //check if username and password is filled
+                if (username.isEmpty() || password.isEmpty()) {
                     log.info("please type username and password");
+                    return;
                 }
+                //initiate ClientService which connects client with server
+                clientService = new ClientService();
+                if (!clientService.isConnectedToServer()) {
+                    log.info("no connection with server couldn't send login data");
+                    clientService = null;
+                    return;
+                }
+                clientService.sendLogin("login", username, password);
+                listenForServerResponse(event);
+
             } catch (Exception e) {
                 log.error(e);
             }
@@ -85,49 +89,51 @@ public class LoginController implements Initializable {
 
     }
 
-    public Boolean isUsernameAndPasswordFilled(){
-        String username = fxUsernameField.getText();
-        String password = fxPasswordField.getText();
-        return !username.isEmpty() && !password.isEmpty();
+    public void listenForServerResponse(ActionEvent event) {
+        new Thread(isClientLoggedTask(event)).start();
     }
 
-    private Task<Boolean> getWaitingForResponseFromServerTask(ActionEvent event) {
+    private Task<Boolean> isClientLoggedTask(ActionEvent event) {
 
 
         BorderPane loadingScreen = getLoadingScreen();
 
         //task is waiting for server to send message
-        Task<Boolean> waitingForResponseFromServer = new Task<>() {
+        Task<Boolean> task = new Task<>() {
             @Override
             protected Boolean call() throws Exception {
-                //loading screen appear
-                Platform.runLater(() -> fxRootContainer.getChildren().add(loadingScreen));
                 //return value sent by server
                 return clientService.getDataInputStream().readBoolean();
             }
         };
+        task.setOnRunning(workerStateEvent -> {
+            //loading screen appear
+            Platform.runLater(() -> fxRootContainer.getChildren().add(loadingScreen));
+        });
 
         //run when waitingForResponseFromServer task is completed (server sent message)
-        waitingForResponseFromServer.setOnSucceeded(workerStateEvent -> {
+        task.setOnSucceeded(workerStateEvent -> {
             try {
                 //loading screen disappear
                 Platform.runLater(() -> fxRootContainer.getChildren().remove(loadingScreen));
                 //if response is true, stage switches to client scene
                 //that means client logged successfully
-                if(waitingForResponseFromServer.get()){
+                if (task.get()) {
+                    log.info("logged successfully");
                     switchToClientWindow(event);
-                }else{
+                } else {
                     log.info("invalid email or password");
                 }
             } catch (InterruptedException | ExecutionException | IOException e) {
                 log.error(e);
             }
         });
-        return waitingForResponseFromServer;
+        return task;
     }
 
     /**
      * switches to client scene
+     *
      * @param event
      * @throws IOException
      */
@@ -137,7 +143,7 @@ public class LoginController implements Initializable {
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         stage.setScene(scene);
         ClientController controller = loader.getController();
-        setupClientService(controller);
+        controller.setClientService(clientService);
 
         stage.show();
 
@@ -146,6 +152,7 @@ public class LoginController implements Initializable {
 
     /**
      * switches to sign up scene
+     *
      * @param event
      * @throws IOException
      */
@@ -157,17 +164,12 @@ public class LoginController implements Initializable {
         stage.show();
     }
 
-    public void setupClientService(ClientController controller){
-        //clientService = new ClientService();
-        controller.setClientCore(clientService);
-        clientService.listenForMessages(controller);
-    }
-
     /**
      * creates loading screen
+     *
      * @return object of loading screen
      */
-    public BorderPane getLoadingScreen(){
+    public BorderPane getLoadingScreen() {
         //loading Pane displayed when login sending
         BorderPane loading = new BorderPane();
         loading.setCenter(new Label("Loading..."));

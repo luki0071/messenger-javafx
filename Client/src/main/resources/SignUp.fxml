@@ -19,19 +19,19 @@
                 <padding>
                     <Insets bottom="5.0" top="5.0" />
                 </padding>
-                <TextField fx:id="fxUsernameField" promptText="username" HBox.hgrow="ALWAYS" />
+                <TextField fx:id="fxUsernameField" prefHeight="30.0" promptText="username" HBox.hgrow="ALWAYS" />
             </HBox>
             <HBox alignment="CENTER">
                 <padding>
                     <Insets bottom="5.0" top="5.0" />
                 </padding>
-                <TextField fx:id="fxEmailField" promptText="email" HBox.hgrow="ALWAYS" />
+                <TextField fx:id="fxEmailField" prefHeight="30.0" promptText="email" HBox.hgrow="ALWAYS" />
             </HBox>
             <HBox alignment="CENTER">
                 <padding>
                     <Insets bottom="5.0" top="5.0" />
                 </padding>
-                <TextField fx:id="fxPasswordField" promptText="password" HBox.hgrow="ALWAYS">
+                <TextField fx:id="fxPasswordField" prefHeight="30.0" promptText="password" HBox.hgrow="ALWAYS">
                     <padding>
                         <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                     </padding>
@@ -41,7 +41,7 @@
                 <padding>
                     <Insets bottom="5.0" top="5.0" />
                 </padding>
-                <TextField fx:id="fxRepeatPasswordField" promptText="repeat password" HBox.hgrow="ALWAYS" />
+                <TextField fx:id="fxRepeatPasswordField" prefHeight="30.0" promptText="repeat password" HBox.hgrow="ALWAYS" />
             </HBox>
             <Button fx:id="fxSignUpButton" mnemonicParsing="false" prefHeight="30.0" prefWidth="200.0" style="-fx-background-color: #0374f9;" text="Confirm" textAlignment="CENTER" textFill="WHITE">
                 <VBox.margin>

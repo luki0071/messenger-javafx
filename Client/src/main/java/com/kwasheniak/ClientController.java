@@ -1,5 +1,6 @@
 package com.kwasheniak;
 
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -17,7 +18,10 @@ import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import lombok.extern.log4j.Log4j2;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URL;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -25,6 +29,8 @@ import java.util.ResourceBundle;
 @Log4j2
 public class ClientController implements Initializable {
 
+    private static final int DEFAULT_PADDING_VALUE = 5;
+    private static final double MESSAGE_LABEL_CORNER_RADIUS_VALUE = 5.0;
     @FXML
     private BorderPane fxRootContainer;
     @FXML
@@ -39,12 +45,8 @@ public class ClientController implements Initializable {
     private Button fxSendMessageButton;
     @FXML
     private Button fxAddFileButton;
-
     private File fileToSend;
-    private static final int DEFAULT_PADDING_VALUE = 5;
-    private static final double MESSAGE_LABEL_CORNER_RADIUS_VALUE = 5.0;
-
-    private ClientService clientCore;
+    private ClientService clientService;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -56,7 +58,7 @@ public class ClientController implements Initializable {
             fxWrittingTextArea.clear();
             if (!text.isEmpty()) {
                 try {
-                    byte[][] data = clientCore.sendMessage(text);
+                    byte[][] data = clientService.sendTextMessage(text);
                     addMessageToMessageBoard(MessageStatus.SENT, data);
                 } catch (IOException e) {
                     log.info("cannot establish connect with server");
@@ -69,7 +71,7 @@ public class ClientController implements Initializable {
             if (fileToSend != null) {
                 log.info(fileToSend.getAbsolutePath());
                 try {
-                    byte[][] data = clientCore.sendMessage(fileToSend);
+                    byte[][] data = clientService.sendFileMessage(fileToSend);
                     addMessageToMessageBoard(MessageStatus.SENT, data);
                     fileToSend = null;
                 } catch (IOException e) {
@@ -79,8 +81,23 @@ public class ClientController implements Initializable {
         });
     }
 
-    public void setClientCore(ClientService clientCore) {
-        this.clientCore = clientCore;
+    public void listenForMessages() {
+        new Thread(() -> {
+            try {
+                while (clientService.isConnectedToServer()) {
+                    byte[] dataType = clientService.receiveMessage();
+                    byte[] data = clientService.receiveMessage();
+                    Platform.runLater(() -> addMessageToMessageBoard(MessageStatus.RECEIVED, new byte[][]{dataType, data}));
+                }
+            } catch (IOException e) {
+                log.error(e);
+            }
+        }).start();
+    }
+
+    public void setClientService(ClientService clientService) {
+        this.clientService = clientService;
+        listenForMessages();
     }
 
     public File chooseFileToSend(Window window) {
@@ -127,12 +144,12 @@ public class ClientController implements Initializable {
         return messageLabel;
     }
 
-    private Text getTextNode(byte[] data){
+    private Text getTextNode(byte[] data) {
         String textMessage = new String(data);
         return new Text(textMessage);
     }
 
-    private ImageView getImageViewNode(String fileName, byte[] data){
+    private ImageView getImageViewNode(String fileName, byte[] data) {
         Image image = getImageFromData(data);
         ImageView imageView = getImageViewOfImage(image);
         imageView.setOnMouseClicked(mouseEvent -> showFileDownloadDialog(fileName, data));
@@ -140,7 +157,7 @@ public class ClientController implements Initializable {
         return imageView;
     }
 
-    private Hyperlink getHyperlinkNode(String fileName, byte[] data){
+    private Hyperlink getHyperlinkNode(String fileName, byte[] data) {
         Hyperlink hyperlink = new Hyperlink(fileName);
         hyperlink.setOnAction(event -> showFileDownloadDialog(fileName, data));
         return hyperlink;
@@ -191,7 +208,7 @@ public class ClientController implements Initializable {
         }
     }
 
-    public void showFileSaveDialog(Window window, String fileName, byte[] data){
+    public void showFileSaveDialog(Window window, String fileName, byte[] data) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialDirectory(new File("C:\\Users\\Kwasheniak\\Desktop"));
         fileChooser.setInitialFileName(fileName);

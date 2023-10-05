@@ -20,13 +20,13 @@
                     <padding>
                         <Insets bottom="5.0" top="5.0" />
                     </padding>
-                    <TextField fx:id="fxUsernameField" promptText="username" HBox.hgrow="ALWAYS" />
+                    <TextField fx:id="fxUsernameField" prefHeight="30.0" promptText="username" HBox.hgrow="ALWAYS" />
                 </HBox>
                 <HBox alignment="CENTER">
                     <padding>
                         <Insets bottom="5.0" top="5.0" />
                     </padding>
-                    <TextField fx:id="fxPasswordField" promptText="password" HBox.hgrow="ALWAYS">
+                    <TextField fx:id="fxPasswordField" prefHeight="30.0" promptText="password" HBox.hgrow="ALWAYS">
                         <padding>
                             <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
                         </padding>

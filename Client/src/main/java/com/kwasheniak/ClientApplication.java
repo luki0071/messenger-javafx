@@ -26,6 +26,7 @@ public class ClientApplication extends Application {
 
     /**
      * sets min size of window
+     *
      * @param stage object of window which displays content
      */
     private void setStageMinSize(Stage stage) {
