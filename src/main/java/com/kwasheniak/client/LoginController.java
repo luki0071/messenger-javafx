@@ -1,5 +1,6 @@
 package com.kwasheniak.client;
 
+import com.kwasheniak.data.Requests;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.animation.Transition;
@@ -36,8 +37,8 @@ import java.util.concurrent.ExecutionException;
 @Log4j2
 public class LoginController implements Initializable {
 
-    public static final String MENU_FXML = "/Menu.fxml";
-    public static final String SIGN_UP_FXML = "/SignUp.fxml";
+    public static final String MENU_FXML = "/client/Menu.fxml";
+    public static final String SIGN_UP_FXML = "/client/SignUp.fxml";
     @FXML
     public BorderPane fxRootContainer;
     @FXML
@@ -122,11 +123,11 @@ public class LoginController implements Initializable {
 
         Task<Boolean> loginTask = new Task<>() {
             @Override
-            protected Boolean call() throws IOException, ClassNotFoundException {
-                String response;
+            protected Boolean call() throws IOException {
+                Requests response;
                 do {
                     response = ClientUtils.receiveResponse();
-                } while (response == null || !ClientRequests.LOGIN.toString().equals(response));
+                } while (!Requests.LOGIN.equals(response));
                 boolean isLogged = (Boolean) ClientUtils.receiveData();
                 responseInfo[0] = (String) ClientUtils.receiveData();
                 return isLogged;

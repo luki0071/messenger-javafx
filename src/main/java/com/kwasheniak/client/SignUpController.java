@@ -1,5 +1,6 @@
 package com.kwasheniak.client;
 
+import com.kwasheniak.data.Requests;
 import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.animation.Transition;
@@ -63,7 +64,7 @@ public class SignUpController implements Initializable {
     @FXML
     public StackPane fxSignUpContainer;
 
-    public static final String LOGIN_FXML_PATH = "/Login.fxml";
+    public static final String LOGIN_FXML_PATH = "/client/Login.fxml";
     public static final String USERNAME_PATTERN = "^[\\w]{4,45}$";
     public static final String EMAIL_PATTERN = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$";
     public static final String PASSWORD_PATTERN = "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,45}$";
@@ -124,10 +125,10 @@ public class SignUpController implements Initializable {
         Task<Boolean> signupTask = new Task<>() {
             @Override
             protected Boolean call() throws Exception {
-                String response;
+                Requests response;
                 do {
                     response = ClientUtils.receiveResponse();
-                } while (response == null || !ClientRequests.SIGN_UP.toString().equals(response));
+                } while (!Requests.SIGN_UP.equals(response));
                 boolean isLogged = (Boolean) ClientUtils.receiveData();
                 responseInfo[0] = (String) ClientUtils.receiveData();
                 return isLogged;

@@ -1,5 +1,6 @@
 package com.kwasheniak.client;
 
+import com.kwasheniak.data.Requests;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,18 +10,13 @@ import java.io.ObjectOutputStream;
 import java.util.Arrays;
 
 public class ClientUtils {
-    /*public static final String LOGIN = "login";
-    public static final String LOGOUT = "logout";
-    public static final String SIGN_UP = "signup";
-    public static final String USERNAMES_LIST = "usernames";
-    public static final String START_CHAT = "startchat";*/
     @Getter
     @Setter
     private static String currentConversation;
 
     public static boolean sendLoginRequest(String username, String password) {
         try {
-            sendRequest(ClientRequests.LOGIN.toString());
+            sendRequest(Requests.LOGIN);
             sendData(username);
             sendData(password);
             return true;
@@ -32,7 +28,7 @@ public class ClientUtils {
 
     public static boolean sendLogoutRequest() {
         try {
-            sendRequest(ClientRequests.LOGOUT.toString());
+            sendRequest(Requests.LOGOUT);
             return true;
         } catch (IOException e) {
             ClientService.closeConnection();
@@ -42,7 +38,7 @@ public class ClientUtils {
 
     public static boolean sendSignUpRequest(String username, String password) {
         try {
-            sendRequest(ClientRequests.SIGN_UP.toString());
+            sendRequest(Requests.SIGN_UP);
             sendData(username);
             sendData(password);
             return true;
@@ -53,19 +49,19 @@ public class ClientUtils {
     }
 
     public static void sendUsernameListRequest() throws IOException {
-        sendRequest(ClientRequests.USERNAMES_LIST.toString());
+        sendRequest(Requests.USERNAMES_LIST);
     }
 
     public static boolean startChatWith(String username) throws IOException {
         if (ClientService.isConnectedToServer()) {
-            sendRequest(ClientRequests.START_CHAT.toString());
+            sendRequest(Requests.START_CHAT);
             sendData(username);
             return true;
         }
         return false;
     }
 
-    private static void sendRequest(String request) throws IOException {
+    private static void sendRequest(Requests request) throws IOException {
         sendData(request);
     }
 
@@ -75,11 +71,11 @@ public class ClientUtils {
         objectOutputStream.flush();
     }
 
-    public static String receiveResponse() throws IOException {
+    public static Requests receiveResponse() throws IOException {
         ObjectInputStream objectInputStream = ClientService.getObjectInputStream();
         try {
-            String response = (String) objectInputStream.readObject();
-            if (response != null && Arrays.stream(ClientRequests.values()).anyMatch(clientRequest -> clientRequest.toString().equals(response)))
+            Requests response = (Requests) objectInputStream.readObject();
+            if (response != null && Arrays.asList(Requests.values()).contains(response))
                 return response;
         } catch (ClassNotFoundException e) {
             return null;
@@ -95,27 +91,4 @@ public class ClientUtils {
             return null;
         }
     }
-
-    /*public static byte[][] sendTextMessage(String textToSend) throws IOException {
-        byte[] type = new byte[0];
-        byte[] bytes = textToSend.getBytes();
-        sendMessage(type);
-        sendMessage(bytes);
-        return new byte[][]{type, bytes};
-    }
-
-    public static byte[][] sendFileMessage(File fileToSend) throws IOException {
-        byte[] fileName = fileToSend.getName().getBytes();
-        FileInputStream fileInputStream = new FileInputStream(fileToSend.getAbsolutePath());
-        byte[] file = fileInputStream.readNBytes((int) fileToSend.length());
-        fileInputStream.close();
-        sendMessage(fileName);
-        sendMessage(file);
-        return new byte[][]{fileName, file};
-    }
-
-    private static void sendMessage(byte[] data) throws IOException {
-        ClientService.getObjectOutputStream().writeInt(data.length);
-        ClientService.getObjectOutputStream().write(data);
-    }*/
 }

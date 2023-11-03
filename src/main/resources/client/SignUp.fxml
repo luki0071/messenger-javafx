@@ -8,7 +8,7 @@
 <?import javafx.scene.text.*?>
 <BorderPane fx:id="fxRootContainer" prefHeight="600.0" prefWidth="600.0" style="-fx-background-color: lightblue;"
             xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.kwasheniak.SignUpController">
+            fx:controller="com.kwasheniak.client.SignUpController">
     <center>
         <VBox alignment="CENTER" maxHeight="-Infinity" maxWidth="250.0" minHeight="340.0"
               style="-fx-background-color: white; -fx-background-radius: 5;" BorderPane.alignment="CENTER">

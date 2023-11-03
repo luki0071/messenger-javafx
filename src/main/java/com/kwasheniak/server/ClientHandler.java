@@ -1,5 +1,7 @@
 package com.kwasheniak.server;
 
+import com.kwasheniak.client.ClientStatus;
+import com.kwasheniak.data.Requests;
 import com.kwasheniak.database.DatabaseUtils;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -11,17 +13,12 @@ import java.net.Socket;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.TreeMap;
 
 @Log4j2
 public class ClientHandler {
     public static volatile ArrayList<ClientHandler> loggedClients = new ArrayList<>();
-
-    /*private static final String LOGIN = "login";
-    private static final String LOGOUT = "logout";
-    private static final String SIGN_UP = "signup";
-    private static final String USERNAMES_LIST = "usernames";
-    private static final String START_CHAT = "startchat";*/
 
     @Getter
     private Socket socket;
@@ -50,15 +47,15 @@ public class ClientHandler {
             this.objectOutputStream = new ObjectOutputStream(socket.getOutputStream());
             this.objectInputStream = new ObjectInputStream(socket.getInputStream());
 
-            String whatClientWant = receiveRequest();
+            Requests whatClientWant = receiveRequest();
             String username = String.valueOf(receiveData());
             String password = String.valueOf(receiveData());
 
-            if (ClientRequests.LOGIN.toString().equals(whatClientWant)) {
+            if (Requests.LOGIN.equals(whatClientWant)) {
                 loginClient(username, password);
                 return;
             }
-            if (ClientRequests.SIGN_UP.toString().equals(whatClientWant)) {
+            if (Requests.SIGN_UP.equals(whatClientWant)) {
                 signUpClient(username, password);
             }
         } catch (IOException | SQLException e) {
@@ -73,24 +70,26 @@ public class ClientHandler {
             try {
                 while (socket.isConnected()) {
                     log.info("waiting for request");
-                    String request = receiveRequest();
-                    if (ClientRequests.USERNAMES_LIST.toString().equals(request)) {
+                    Requests request = receiveRequest();
+                    if (Requests.USERNAMES_LIST.equals(request)) {
                         log.info("request usernames");
                         sendUsernamesListResponse(getUsersStatus());
                         continue;
                     }
-                    if (ClientRequests.START_CHAT.toString().equals(request)) {
+                    if (Requests.START_CHAT.equals(request)) {
                         log.info("request start chat");
                         /*String username = new String(readData());
                         broadcastMessagesTo(username);*/
                         continue;
                     }
-                    if (ClientRequests.LOGOUT.toString().equals(request)) {
+                    if (Requests.LOGOUT.equals(request)) {
+                        updateUserStatus(clientUsername, ClientStatus.OFFLINE);
                         closeConnection();
                         removeClient();
                     }
                 }
             } catch (IOException e) {
+                updateUserStatus(clientUsername, ClientStatus.OFFLINE);
                 closeConnection();
                 removeClient();
             }
@@ -100,67 +99,41 @@ public class ClientHandler {
         thread.start();
     }
 
-    public TreeMap<String, Boolean> getUsersStatus() {
+    public TreeMap<String, ClientStatus> getUsersStatus() {
         try {
-            TreeMap<String, Boolean> usersStatus = new TreeMap<>();
+            TreeMap<String, ClientStatus> usersStatus = new TreeMap<>();
             String[] usernames = DatabaseUtils.getAllUsernamesExcept(clientUsername);
 
             Arrays.stream(usernames).forEach(username -> {
                 boolean status = loggedClients.stream().anyMatch(clientHandler -> username.equals(clientHandler.clientUsername));
-                usersStatus.put(username, status);
+                usersStatus.put(username, status ? ClientStatus.ONLINE : ClientStatus.OFFLINE);
             });
             return usersStatus;
-
         } catch (SQLException e) {
             log.error(e);
         }
         return null;
     }
 
-    /*public void updateClientStatus() throws IOException {
-        for (ClientHandler client : clients) {
-            if (!clientUsername.equals(client.clientUsername)) {
-                objectOutputStream.writeInt(1);
-                writeData(clientUsername.getBytes());
-                writeData("online".getBytes());
-            }
-        }
-
-        try {
-            String[] usernames = DatabaseUtils.getAllUsernamesExcept(clientUsername);
-            objectOutputStream.writeInt(usernames.length);
-            for (String username : usernames) {
-                writeData(username.getBytes());
-                if(clients.stream().anyMatch(clientHandler -> username.equals(clientHandler.clientUsername))){
-                    writeData("online".getBytes());
-                }else{
-                    writeData("offline".getBytes());
-                }
-            }
-
-        } catch (SQLException e) {
-            log.error(e);
-        }
-    }*/
-
     public void loginClient(String username, String password) throws IOException, SQLException {
-        if (DatabaseUtils.isLoginDataCorrect(username, password)) {
-            log.info("client exists");
-            if (isClientAlreadyLogged(username)) {
-                log.info(username + " is already logged");
-                sendLoginResponse(false, username + " is already logged");
-                closeConnection();
-            } else {
-                sendLoginResponse(true, username + " successfully logged");
-                clientUsername = username;
-                loggedClients.add(this);
-                startListeningClientThread();
-            }
-        } else {
+        if (!DatabaseUtils.isLoginDataCorrect(username, password)) {
             log.info("client not exists");
             sendLoginResponse(false, "invalid email or password");
             closeConnection();
+            return;
         }
+        log.info("client exists");
+        if (isClientAlreadyLogged(username)) {
+            log.info(username + " is already logged");
+            sendLoginResponse(false, username + " is already logged");
+            closeConnection();
+            return;
+        }
+        sendLoginResponse(true, username + " successfully logged");
+        clientUsername = username;
+        loggedClients.add(this);
+        updateUserStatus(clientUsername, ClientStatus.ONLINE);
+        startListeningClientThread();
     }
 
     public void signUpClient(String username, String password) throws IOException {
@@ -184,7 +157,6 @@ public class ClientHandler {
             closeConnection();
         }
     }
-
 
     public boolean isClientAlreadyLogged(String username) {
         return loggedClients.stream().anyMatch(clientHandler -> username.equals(clientHandler.clientUsername));
@@ -247,23 +219,38 @@ public class ClientHandler {
     }*/
 
     private void sendLoginResponse(boolean isLogged, String info) throws IOException {
-        sendResponse(ClientRequests.LOGIN.toString());
+        sendResponse(Requests.LOGIN);
         sendData(isLogged);
         sendData(info);
     }
 
     private void sendSignUpResponse(boolean isSignedUp, String info) throws IOException {
-        sendResponse(ClientRequests.SIGN_UP.toString());
+        sendResponse(Requests.SIGN_UP);
         sendData(isSignedUp);
         sendData(info);
     }
 
-    private void sendUsernamesListResponse(TreeMap<String, Boolean> usernamesList) throws IOException {
-        sendResponse(ClientRequests.USERNAMES_LIST.toString());
+    private void sendUsernamesListResponse(TreeMap<String, ClientStatus> usernamesList) throws IOException {
+        sendResponse(Requests.USERNAMES_LIST);
         sendData(usernamesList);
     }
 
-    private void sendResponse(String request) throws IOException {
+    private void updateUserStatus(String username, ClientStatus status) {
+        for (ClientHandler client : loggedClients) {
+            if (!clientUsername.equals(client.clientUsername)) {
+                try {
+                    client.sendResponse(Requests.UPDATE_USER_STATUS);
+                    HashMap<String, ClientStatus> map = new HashMap<>();
+                    map.put(username, status);
+                    client.sendData(map);
+                } catch (IOException e) {
+                    log.error("couldn't send data to " + client.clientUsername + " " + e);
+                }
+            }
+        }
+    }
+
+    private void sendResponse(Requests request) throws IOException {
         sendData(request);
     }
 
@@ -272,10 +259,10 @@ public class ClientHandler {
         objectOutputStream.flush();
     }
 
-    private String receiveRequest() throws IOException {
+    private Requests receiveRequest() throws IOException {
         try {
-            String response = (String) objectInputStream.readObject();
-            if (response != null && Arrays.stream(ClientRequests.values()).anyMatch(clientRequest -> clientRequest.toString().equals(response)))
+            Requests response = (Requests) objectInputStream.readObject();
+            if (response != null && Arrays.asList(Requests.values()).contains(response))
                 return response;
         } catch (ClassNotFoundException e) {
             return null;

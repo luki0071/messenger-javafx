@@ -2,90 +2,44 @@
 
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
-<BorderPane prefHeight="600.0" prefWidth="600.0" style="-fx-background-color: lightblue;"
-            xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.kwasheniak.MenuController">
+
+<BorderPane prefHeight="600.0" prefWidth="600.0" style="-fx-background-color: lightblue;" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.kwasheniak.client.MenuController">
     <center>
         <HBox alignment="CENTER" BorderPane.alignment="CENTER">
             <VBox fx:id="fxChatContainer" HBox.hgrow="ALWAYS">
                 <TextFlow textAlignment="CENTER">
-                    <Label text="chat name">
+                    <Label fx:id="fxChatName">
                         <font>
-                            <Font size="26.0"/>
+                            <Font size="26.0" />
                         </font>
                     </Label>
                 </TextFlow>
-                <fx:include fx:id="chat" source="Chat.fxml" VBox.vgrow="ALWAYS"/>
+                <TabPane fx:id="fxTabChats" VBox.vgrow="ALWAYS"/>
+                <!--<fx:include fx:id="chat" source="Chat.fxml" VBox.vgrow="ALWAYS"/>-->
             </VBox>
-            <VBox fx:id="fxUsersContainer" minWidth="-Infinity" HBox.hgrow="ALWAYS">
+            <VBox minWidth="-Infinity" style="-fx-background-color: #ccffff;">
                 <TextFlow textAlignment="CENTER">
                     <Label text="Users">
                         <font>
-                            <Font size="26.0"/>
+                            <Font size="26.0" />
                         </font>
                     </Label>
                 </TextFlow>
-                <HBox alignment="CENTER_LEFT">
-                    <BorderPane style="-fx-background-color: grey; -fx-background-radius: 90;">
-                        <center>
-                            <ImageView fitHeight="30.0" pickOnBounds="true" preserveRatio="true"
-                                       BorderPane.alignment="CENTER">
-                                <Image url="@images/user-image.png"/>
-                            </ImageView>
-                        </center>
-                        <padding>
-                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
-                        </padding>
-                    </BorderPane>
-                    <Label alignment="TOP_LEFT" contentDisplay="CENTER" text="Label">
-                        <font>
-                            <Font size="17.0"/>
-                        </font>
-                        <padding>
-                            <Insets left="5.0" right="5.0"/>
-                        </padding>
-                    </Label>
-                    <padding>
-                        <Insets bottom="3.0" left="5.0" right="5.0" top="3.0"/>
-                    </padding>
-                </HBox>
-                <HBox alignment="CENTER_LEFT">
-                    <BorderPane style="-fx-background-color: grey; -fx-background-radius: 90;">
-                        <center>
-                            <ImageView fitHeight="30.0" pickOnBounds="true" preserveRatio="true"
-                                       BorderPane.alignment="CENTER">
-                                <Image url="@images/user-image.png"/>
-                            </ImageView>
-                        </center>
-                        <padding>
-                            <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
-                        </padding>
-                    </BorderPane>
-                    <Label alignment="TOP_LEFT" contentDisplay="CENTER" text="label">
-                        <font>
-                            <Font size="17.0"/>
-                        </font>
-                        <padding>
-                            <Insets left="5.0" right="5.0"/>
-                        </padding>
-                    </Label>
-                    <padding>
-                        <Insets bottom="3.0" left="5.0" right="5.0" top="3.0"/>
-                    </padding>
-                </HBox>
+                <VBox fx:id="fxUsersContainer" />
+            <padding>
+               <Insets left="5.0" right="5.0" />
+            </padding>
             </VBox>
         </HBox>
     </center>
     <top>
         <HBox BorderPane.alignment="CENTER">
-            <Button fx:id="fxLogoutButton" mnemonicParsing="false" text="Logout"/>
+            <Button fx:id="fxLogoutButton" mnemonicParsing="false" text="Logout" />
+         <padding>
+            <Insets left="5.0" />
+         </padding>
         </HBox>
     </top>
-    <padding>
-        <Insets bottom="5.0" left="5.0" right="5.0" top="5.0"/>
-    </padding>
 </BorderPane>

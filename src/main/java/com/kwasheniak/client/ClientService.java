@@ -36,29 +36,6 @@ public class ClientService {
 
     }
 
-    /*private void listenFromServer() {
-        Thread thread = new Thread(() -> {
-            try {
-                while (socket.isConnected()) {
-                    log.info("waiting for server response");
-                    String serverResponse = captureServerResponse();
-                    if (ClientRequests.LOGIN.toString().equals(serverResponse)) {
-
-                    }
-                }
-            } catch (IOException e) {
-                closeConnection();
-            }
-            log.info("disconnected from server");
-        });
-        thread.setName("Server Listener Thread");
-        thread.start();
-    }*/
-
-    /*private static String captureServerResponse() throws IOException {
-        return new String(dataInputStream.readNBytes(dataInputStream.readInt()));
-    }*/
-
     public static boolean isConnectedToServer() {
         return socket != null && !socket.isClosed();
     }

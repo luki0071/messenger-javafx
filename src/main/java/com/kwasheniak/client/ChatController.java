@@ -35,7 +35,7 @@ public class ChatController implements Initializable {
     private static final String SENT = "sent";
     private static final String RECEIVED = "received";
     private static final String INITIAL_DIRECTORY = "C:\\Users\\Kwasheniak\\Desktop";
-    public static final String MENU_FXML = "/Menu.fxml";
+    public static final String MENU_FXML = "/client/Menu.fxml";
     private static final int DEFAULT_PADDING_VALUE = 5;
     private static final double MESSAGE_LABEL_CORNER_RADIUS_VALUE = 5.0;
     @FXML

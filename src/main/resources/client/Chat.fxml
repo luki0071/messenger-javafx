@@ -1,33 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.TextArea?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<BorderPane fx:id="fxRootContainer" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.kwasheniak.ChatController">
+
+<BorderPane fx:id="fxRootContainer" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.kwasheniak.client.ChatController">
     <bottom>
         <HBox fx:id="bottomHBox" alignment="CENTER" prefHeight="100.0" spacing="3.0">
-            <TextArea fx:id="fxWritingTextArea" HBox.hgrow="ALWAYS"/>
-            <Button fx:id="fxSendMessageButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity"
-                    minWidth="-Infinity" mnemonicParsing="false" prefHeight="100.0" prefWidth="100.0" text="Send"
-                    HBox.hgrow="ALWAYS"/>
-            <Button fx:id="fxAddFileButton" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity"
-                    minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="100.0"
-                    prefWidth="100.0" text="Add File"/>
+            <TextArea fx:id="fxWritingTextArea" HBox.hgrow="ALWAYS" />
+            <Button fx:id="fxSendMessageButton" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="100.0" prefWidth="100.0" text="Send" HBox.hgrow="ALWAYS" />
+            <Button fx:id="fxAddFileButton" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" mnemonicParsing="false" prefHeight="100.0" prefWidth="100.0" text="Add File" />
             <padding>
-                <Insets top="5.0"/>
+                <Insets top="5.0" />
             </padding>
         </HBox>
     </bottom>
     <center>
-        <ScrollPane fx:id="fxScrollPane" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" pannable="true"
-                    style="-fx-focus-color: transparent; -fx-faint-focus-color: transparent;" vbarPolicy="NEVER"
-                    BorderPane.alignment="CENTER">
-            <VBox fx:id="fxMessageBoard"/>
+        <ScrollPane fx:id="fxScrollPane" fitToHeight="true" fitToWidth="true" hbarPolicy="NEVER" pannable="true" style="-fx-focus-color: transparent; -fx-faint-focus-color: transparent;" vbarPolicy="NEVER" BorderPane.alignment="CENTER">
+            <VBox fx:id="fxMessageBoard" />
         </ScrollPane>
     </center>
+   <padding>
+      <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+   </padding>
     <!--<top>
         <HBox alignment="TOP_RIGHT" BorderPane.alignment="CENTER">
             <HBox HBox.hgrow="ALWAYS">
