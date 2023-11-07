@@ -1,9 +1,9 @@
 package com.kwasheniak.client;
 
+import com.kwasheniak.data.ChatMessage;
 import com.kwasheniak.data.Requests;
 import javafx.application.Platform;
 import javafx.event.Event;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
@@ -13,7 +13,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import lombok.extern.log4j.Log4j2;
@@ -32,10 +31,9 @@ public class MenuController implements Initializable {
     @FXML
     public TabPane fxTabChats;
     @FXML
-    private VBox fxChatContainer;
-    @FXML
     private VBox fxUsersContainer;
     private TreeMap<String, ClientStatus> usernameList;
+    private final HashMap<String, ChatController> conversations = new HashMap<>();
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -50,7 +48,7 @@ public class MenuController implements Initializable {
         listenFromServer();
     }
 
-    public static TreeMap<String, ClientStatus> sortByValues(final Map<String, ClientStatus> map) {
+    public static TreeMap<String, ClientStatus> sortMapByValues(final Map<String, ClientStatus> map) {
         Comparator<String> valueComparator = (k1, k2) -> {
             int value = map.get(k1).compareTo(map.get(k2));
             if (value == 0) {
@@ -78,15 +76,13 @@ public class MenuController implements Initializable {
             try {
                 while (ClientService.isConnectedToServer()) {
                     Requests response = ClientUtils.receiveResponse();
+
                     if (response == null)
                         continue;
                     if (Requests.USERNAMES_LIST.equals(response)) {
                         Object list = ClientUtils.receiveData();
                         if (list instanceof TreeMap<?, ?>) {
-                            //usernameList.putAll((Map<String, Boolean>) list);
-                            /*HashMap<String, Boolean> map = usernameList.entrySet().stream().sorted(Map.Entry.comparingByValue())
-                                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1, HashMap::new));*/
-                            usernameList = sortByValues((TreeMap<String, ClientStatus>) list);
+                            usernameList = sortMapByValues((TreeMap<String, ClientStatus>) list);
                             updateUsernameList(usernameList);
                         }
                         continue;
@@ -95,13 +91,35 @@ public class MenuController implements Initializable {
                         Object user = ClientUtils.receiveData();
                         if (user instanceof HashMap<?, ?>) {
                             usernameList.putAll((HashMap<String, ClientStatus>) user);
-                            usernameList = sortByValues(usernameList);
+                            usernameList = sortMapByValues(usernameList);
                             updateUsernameList(usernameList);
                         }
                         continue;
                     }
-                    if (Requests.START_CHAT.equals(response)) {
+                    if (Requests.CHAT_MESSAGE.equals(response)) {
+                        String messageFrom = (String) ClientUtils.receiveData();
+                        ChatMessage message = (ChatMessage) ClientUtils.receiveData();
+                        Platform.runLater(() -> {
+                            ChatController controller = conversations.get(messageFrom);
+                            if (controller == null) {
+                                try {
+                                    Tab tab = createConversationTab(messageFrom);
+                                    tab.setStyle("-fx-font-weight: bold");
+                                    fxTabChats.getTabs().add(tab);
+                                } catch (IOException e) {
+                                    log.error(e);
+                                }
+                                controller = conversations.get(messageFrom);
+                            }
+                            if (!fxTabChats.getSelectionModel().getSelectedItem().getText().equals(messageFrom)) {
+                                Tab newMessageTab = fxTabChats.getTabs().stream()
+                                        .filter(tab -> tab.getText().equals(messageFrom))
+                                        .findFirst().get();
+                                newMessageTab.setStyle("-fx-font-weight: bold");
+                            }
 
+                            controller.addMessageToMessageBoard(ChatController.RECEIVED, message);
+                        });
                     }
                 }
             } catch (IOException e) {
@@ -131,51 +149,44 @@ public class MenuController implements Initializable {
         String color = ClientStatus.ONLINE.equals(status) ? "lightgreen;" : "grey;";
         menuUserLabelController.setImageFrameColor(color);
         menuUserLabelController.setUsername(username);
-        menuUserLabelController.setOnClick(new EventHandler<>() {
-            @Override
-            public void handle(MouseEvent mouseEvent) {
-                try {
-                    FXMLLoader loader = new FXMLLoader(getClass().getResource(CHAT_FXML));
-                    Parent chatPane = loader.load();
-                    Tab tab = new Tab(username);
-                    tab.setContent(chatPane);
-                    fxTabChats.getTabs().add(tab);
-                } catch (IOException e) {
-                    log.error(e);
-                }
-            }
-        });
-
+        menuUserLabelController.setOnClick(mouseEvent -> openConversationTab(username));
         return borderPane;
     }
 
-    public void switchToClientChatWindow(Event event, String title) {
+    private void openConversationTab(String conversationName) {
+        Optional<Tab> conversationTab = fxTabChats.getTabs().stream()
+                .filter(tab -> tab.getText().equals(conversationName))
+                .findFirst();
+
+        if (conversationTab.isPresent()) {
+            fxTabChats.getSelectionModel().select(conversationTab.get());
+            return;
+        }
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(CHAT_FXML));
-            Scene scene = new Scene(loader.load());
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(scene);
-            stage.setTitle("Conversation with " + title);
-            stage.show();
-            stage.setOnCloseRequest(windowEvent -> ClientService.closeConnection());
+            Tab tab = createConversationTab(conversationName);
+            fxTabChats.getTabs().add(tab);
+            fxTabChats.getSelectionModel().select(tab);
         } catch (IOException e) {
             log.error(e);
         }
     }
 
-    /*public static <K, V extends Comparable<V>> Map<K, V> sortByValues(final Map<K, V> map) {
-        Comparator<K> valueComparator = (k1, k2) -> {
-            int value = map.get(k2).compareTo(map.get(k1));
-            if(value == 0){
-                return k1.toString().compareTo(k2.toString());
+    private Tab createConversationTab(String conversationName) throws IOException {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource(CHAT_FXML));
+        Parent chatPane = loader.load();
+        ChatController controller = loader.getController();
+        controller.setMessageReceiver(conversationName);
+        conversations.put(conversationName, controller);
+        Tab tab = new Tab(conversationName);
+        tab.setContent(chatPane);
+        tab.setOnClosed(event -> conversations.remove(conversationName));
+        tab.setOnSelectionChanged(event -> {
+            if (tab.isSelected()) {
+                tab.setStyle("-fx-font-weight: regular");
             }
-            return value;
-        };
-
-        Map<K, V> sortedByValues = new TreeMap<>(valueComparator);
-        sortedByValues.putAll(map);
-        return sortedByValues;
-    }*/
+        });
+        return tab;
+    }
 
     public void switchToLoginWindow(Event event) {
         try {
@@ -188,5 +199,4 @@ public class MenuController implements Initializable {
             log.error(e);
         }
     }
-
 }

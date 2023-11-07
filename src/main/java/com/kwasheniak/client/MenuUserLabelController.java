@@ -34,7 +34,7 @@ public class MenuUserLabelController implements Initializable {
         this.fxImageFrame.setStyle("-fx-background-color: " + color + "; -fx-background-radius: 90;");
     }
 
-    public void setUserImage(String filePath){
+    public void setUserImage(String filePath) {
         this.fxUserImage.setImage(new Image(filePath));
     }
 
@@ -42,7 +42,7 @@ public class MenuUserLabelController implements Initializable {
         this.fxUsername.setText(username);
     }
 
-    public void setOnClick(EventHandler<MouseEvent> event){
+    public void setOnClick(EventHandler<MouseEvent> event) {
         fxRootContainer.setOnMouseClicked(event);
     }
 }

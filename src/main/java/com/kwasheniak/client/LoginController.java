@@ -82,13 +82,6 @@ public class LoginController implements Initializable {
             setTextLoginInfoPanel("something went wrong, couldn't send login data");
             return;
         }
-        /*try {
-            ClientUtils.sendLoginRequest(username, password);
-        } catch (IOException e) {
-            setLoginInfo("something went wrong, couldn't send login data");
-            ClientService.closeConnection();
-            return;
-        }*/
         listenFromServer(event);
     }
 

@@ -1,45 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.*?>
-<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
-
-<BorderPane prefHeight="600.0" prefWidth="600.0" style="-fx-background-color: lightblue;" xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.kwasheniak.client.MenuController">
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.TextFlow?>
+<BorderPane prefHeight="600.0" prefWidth="600.0" style="-fx-background-color: lightblue;"
+            xmlns="http://javafx.com/javafx/17.0.2-ea" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.kwasheniak.client.MenuController">
     <center>
         <HBox alignment="CENTER" BorderPane.alignment="CENTER">
             <VBox fx:id="fxChatContainer" HBox.hgrow="ALWAYS">
-                <TextFlow textAlignment="CENTER">
-                    <Label fx:id="fxChatName">
-                        <font>
-                            <Font size="26.0" />
-                        </font>
-                    </Label>
-                </TextFlow>
-                <TabPane fx:id="fxTabChats" VBox.vgrow="ALWAYS"/>
-                <!--<fx:include fx:id="chat" source="Chat.fxml" VBox.vgrow="ALWAYS"/>-->
+                <TabPane fx:id="fxTabChats" VBox.vgrow="ALWAYS">
+                    <Tab closable="false" text="public chat">
+                        <fx:include fx:id="chat" source="Chat.fxml" VBox.vgrow="ALWAYS"/>
+                    </Tab>
+                </TabPane>
             </VBox>
             <VBox minWidth="-Infinity" style="-fx-background-color: #ccffff;">
                 <TextFlow textAlignment="CENTER">
                     <Label text="Users">
                         <font>
-                            <Font size="26.0" />
+                            <Font size="26.0"/>
                         </font>
                     </Label>
                 </TextFlow>
-                <VBox fx:id="fxUsersContainer" />
-            <padding>
-               <Insets left="5.0" right="5.0" />
-            </padding>
+                <VBox fx:id="fxUsersContainer"/>
+                <padding>
+                    <Insets left="5.0" right="5.0"/>
+                </padding>
             </VBox>
         </HBox>
     </center>
     <top>
         <HBox BorderPane.alignment="CENTER">
-            <Button fx:id="fxLogoutButton" mnemonicParsing="false" text="Logout" />
-         <padding>
-            <Insets left="5.0" />
-         </padding>
+            <Button fx:id="fxLogoutButton" mnemonicParsing="false" text="Logout"/>
+            <padding>
+                <Insets left="5.0"/>
+            </padding>
         </HBox>
     </top>
 </BorderPane>

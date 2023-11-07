@@ -1,18 +1,16 @@
 package com.kwasheniak.client;
 
+import com.kwasheniak.data.ChatMessage;
 import com.kwasheniak.data.Requests;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.extern.log4j.Log4j2;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.Arrays;
 
+@Log4j2
 public class ClientUtils {
-    @Getter
-    @Setter
-    private static String currentConversation;
 
     public static boolean sendLoginRequest(String username, String password) {
         try {
@@ -52,11 +50,14 @@ public class ClientUtils {
         sendRequest(Requests.USERNAMES_LIST);
     }
 
-    public static boolean startChatWith(String username) throws IOException {
-        if (ClientService.isConnectedToServer()) {
-            sendRequest(Requests.START_CHAT);
-            sendData(username);
+    public static boolean sendMessage(String receiver, ChatMessage message) {
+        try {
+            sendRequest(Requests.CHAT_MESSAGE);
+            sendData(receiver);
+            sendData(message);
             return true;
+        } catch (IOException e) {
+            log.error(e);
         }
         return false;
     }

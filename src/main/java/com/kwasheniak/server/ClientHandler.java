@@ -1,6 +1,7 @@
 package com.kwasheniak.server;
 
 import com.kwasheniak.client.ClientStatus;
+import com.kwasheniak.data.ChatMessage;
 import com.kwasheniak.data.Requests;
 import com.kwasheniak.database.DatabaseUtils;
 import lombok.Getter;
@@ -76,10 +77,10 @@ public class ClientHandler {
                         sendUsernamesListResponse(getUsersStatus());
                         continue;
                     }
-                    if (Requests.START_CHAT.equals(request)) {
-                        log.info("request start chat");
-                        /*String username = new String(readData());
-                        broadcastMessagesTo(username);*/
+                    if (Requests.CHAT_MESSAGE.equals(request)) {
+                        String messageReceiver = (String) receiveData();
+                        ChatMessage message = (ChatMessage) receiveData();
+                        broadcastMessageTo(messageReceiver, message);
                         continue;
                     }
                     if (Requests.LOGOUT.equals(request)) {
@@ -162,61 +163,15 @@ public class ClientHandler {
         return loggedClients.stream().anyMatch(clientHandler -> username.equals(clientHandler.clientUsername));
     }
 
-    /*private void broadcastMessages() throws IOException {
-        while (socket.isConnected()) {
-            byte[][] message = captureMessage();
+    private void broadcastMessageTo(String username, ChatMessage message) throws IOException {
 
-            for (ClientHandler client : clients) {
-                if (!clientUsername.equals(client.clientUsername)) {
-                    client.passMessage(message);
-                }
+        for (ClientHandler client : loggedClients)
+            if (username.equals(client.clientUsername)) {
+                client.sendResponse(Requests.CHAT_MESSAGE);
+                client.sendData(clientUsername);
+                client.sendData(message);
             }
-        }
     }
-
-    private void broadcastClientStatus(String status) throws IOException {
-        for (ClientHandler client : clients) {
-            if (!clientUsername.equals(client.clientUsername)) {
-                client.writeData(status.getBytes());
-            }
-        }
-    }
-
-    private void broadcastMessagesTo(String username) throws IOException {
-
-        while (socket.isConnected()) {
-            byte[][] message = captureMessage();
-
-            for (ClientHandler client : clients)
-                if (username.equals(client.clientUsername))
-                    client.passMessage(message);
-        }
-
-    }*/
-
-    /*private String captureRequest() throws IOException {
-        return new String(readData());
-    }
-
-    private byte[][] captureMessage() throws IOException {
-        byte[] dataType = readData();
-        byte[] data = readData();
-        return new byte[][]{dataType, data};
-    }
-
-    private void passMessage(byte[][] message) throws IOException {
-        writeData(message[0]);
-        writeData(message[1]);
-    }
-
-    private byte[] readData() throws IOException {
-        return objectInputStream.readNBytes(objectInputStream.readInt());
-    }
-
-    private void writeData(byte[] data) throws IOException {
-        objectOutputStream.writeInt(data.length);
-        objectOutputStream.write(data);
-    }*/
 
     private void sendLoginResponse(boolean isLogged, String info) throws IOException {
         sendResponse(Requests.LOGIN);

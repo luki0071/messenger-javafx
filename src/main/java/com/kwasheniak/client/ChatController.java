@@ -1,13 +1,12 @@
 package com.kwasheniak.client;
 
+import com.kwasheniak.data.ChatMessage;
+import com.kwasheniak.data.MessageType;
 import javafx.beans.binding.Bindings;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -17,8 +16,8 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
-import javafx.stage.Stage;
 import javafx.stage.Window;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 
 import java.io.ByteArrayInputStream;
@@ -32,8 +31,8 @@ import java.util.ResourceBundle;
 @Log4j2
 public class ChatController implements Initializable {
 
-    private static final String SENT = "sent";
-    private static final String RECEIVED = "received";
+    public static final String SENT = "sent";
+    public static final String RECEIVED = "received";
     private static final String INITIAL_DIRECTORY = "C:\\Users\\Kwasheniak\\Desktop";
     public static final String MENU_FXML = "/client/Menu.fxml";
     private static final int DEFAULT_PADDING_VALUE = 5;
@@ -54,70 +53,37 @@ public class ChatController implements Initializable {
     private Button fxAddFileButton;
     private File fileToSend;
 
+    @Setter
+    private String messageReceiver;
+
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
 
         setAutoScrollMessageBoard();
-        /*try {
-            ClientUtils.startChatWith(ClientUtils.getCurrentConversation());
-        } catch (IOException e) {
-            log.error(e);
-        }
-        listenForMessages();*/
 
         fxSendMessageButton.setOnAction(event -> {
             String text = fxWritingTextArea.getText();
             fxWritingTextArea.clear();
-            if (!text.isEmpty()) {
-                /*try {
-                    byte[][] data = ClientUtils.sendTextMessage(text);
-                    addMessageToMessageBoard(SENT, data);
-                } catch (IOException e) {
-                    log.info("cannot establish connect with server " + e);
-                }*/
-            }
+            if (text.isEmpty() || messageReceiver == null)
+                return;
+            log.info("messageReceiver " + messageReceiver);
+            ChatMessage message = new ChatMessage(text);
+            ClientUtils.sendMessage(messageReceiver, message);
+            addMessageToMessageBoard(SENT, message);
         });
 
         fxAddFileButton.setOnAction(event -> {
             fileToSend = chooseFileToSend(((Node) event.getSource()).getScene().getWindow());
-            if (fileToSend != null) {
-                log.info(fileToSend.getAbsolutePath());
-                /*try {
-                    byte[][] data = ClientUtils.sendFileMessage(fileToSend);
-                    addMessageToMessageBoard(SENT, data);
-                    fileToSend = null;
-                } catch (IOException e) {
-                    log.info("cannot establish connect with server");
-                }*/
+            if (fileToSend == null || messageReceiver == null)
+                return;
+            try {
+                ChatMessage message = new ChatMessage(fileToSend);
+                ClientUtils.sendMessage(messageReceiver, message);
+                addMessageToMessageBoard(SENT, message);
+            } catch (IOException e) {
+                log.error(e);
             }
         });
-    }
-
-    public void switchToClientMenuWindow(ActionEvent event) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(MENU_FXML));
-            Scene scene = new Scene(loader.load());
-            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(scene);
-            stage.show();
-            stage.setOnCloseRequest(windowEvent -> ClientService.closeConnection());
-        } catch (IOException e) {
-            log.error(e);
-        }
-    }
-
-    public void listenForMessages() {
-        /*new Thread(() -> {
-            try {
-                while (ClientService.isConnectedToServer()) {
-                    byte[] dataType = ClientUtils.receiveData();
-                    byte[] data = ClientUtils.receiveData();
-                    Platform.runLater(() -> addMessageToMessageBoard(RECEIVED, new byte[][]{dataType, data}));
-                }
-            } catch (IOException e) {
-                log.error("connection to the server has been broken " + e);
-            }
-        }).start();*/
     }
 
     public File chooseFileToSend(Window window) {
@@ -127,8 +93,8 @@ public class ChatController implements Initializable {
         return fileChooser.showOpenDialog(window);
     }
 
-    public void addMessageToMessageBoard(String status, byte[][] messageData) {
-        BorderPane messageBlock = createMessageBlock(status, createMessageLabel(messageData[0], messageData[1]));
+    public void addMessageToMessageBoard(String status, ChatMessage message) {
+        BorderPane messageBlock = createMessageBlock(status, createMessageLabel(message));
         fxMessageBoard.getChildren().add(messageBlock);
     }
 
@@ -145,21 +111,21 @@ public class ChatController implements Initializable {
         return messageBlock;
     }
 
-    private TextFlow createMessageLabel(byte[] name, byte[] data) {
+    private TextFlow createMessageLabel(ChatMessage message) {
         TextFlow messageLabel = new TextFlow();
         messageLabel.setMaxWidth(calculateMessageLabelMaxWidth());
         messageLabel.setTextAlignment(TextAlignment.LEFT);
         messageLabel.setPadding(new Insets(DEFAULT_PADDING_VALUE));
         setAutoResizableMessageLabel(messageLabel);
-        String fileName = new String(name);
-        if (fileName.isEmpty()) {
-            messageLabel.getChildren().add(getTextNode(data));
+        if (MessageType.TEXT.equals(message.getMessageType())) {
+            messageLabel.getChildren().add(getTextNode(message.getData()));
             return messageLabel;
         }
-        if (fileName.endsWith(".jpg") || fileName.endsWith(".png")) {
-            messageLabel.getChildren().add(getImageViewNode(fileName, data));
+        String filename = message.getFilename();
+        if (filename.endsWith(".jpg") || filename.endsWith(".png")) {
+            messageLabel.getChildren().add(getImageViewNode(filename, message.getData()));
         } else {
-            messageLabel.getChildren().add(getHyperlinkNode(fileName, data));
+            messageLabel.getChildren().add(getHyperlinkNode(filename, message.getData()));
         }
         return messageLabel;
     }
